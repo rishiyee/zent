@@ -181,6 +181,9 @@ export function TransactionFormFields({
             className="w-full"
             leadingOptions={[{ value: UNCATEGORIZED, label: "Uncategorized" }]}
           />
+          <p className="text-xs text-muted-foreground">
+            Showing {value.type} categories only.
+          </p>
         </div>
         <div className="flex flex-col gap-2">
           <Label>Account</Label>

@@ -12,20 +12,27 @@ import { CategoryGroupCard } from "@/components/categories/category-group-card"
 export function CategoryTypeSection({
   label,
   groups,
+  allGroups,
   onAddGroup,
   onRenameGroup,
   onDeleteGroup,
   onAddCategory,
+  onUpdateCategory,
   onDeleteCategory,
   onMoveCategory,
 }: {
   type: CategoryType
   label: string
   groups: CategoryGroup[]
+  allGroups: CategoryGroup[]
   onAddGroup: (name: string) => void
   onRenameGroup: (groupId: string, name: string) => void
   onDeleteGroup: (groupId: string) => void
   onAddCategory: (groupId: string, name: string, icon: string) => void
+  onUpdateCategory: (
+    categoryId: string,
+    patch: { name?: string; icon?: string; groupId?: string }
+  ) => void
   onDeleteCategory: (groupId: string, categoryId: string) => void
   onMoveCategory: (
     categoryId: string,
@@ -80,9 +87,11 @@ export function CategoryTypeSection({
           <CategoryGroupCard
             key={group.id}
             group={group}
+            allGroups={allGroups}
             onRename={(name) => onRenameGroup(group.id, name)}
             onDelete={() => onDeleteGroup(group.id)}
-            onAddCategory={(name, icon) => onAddCategory(group.id, name, icon)}
+            onAddCategory={onAddCategory}
+            onUpdateCategory={onUpdateCategory}
             onDeleteCategory={(categoryId) =>
               onDeleteCategory(group.id, categoryId)
             }

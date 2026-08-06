@@ -9,6 +9,7 @@ import {
   deleteCategoryGroup,
   moveCategory,
   renameCategoryGroup,
+  updateCategory,
 } from "@/app/(dashboard)/categories/actions"
 import {
   CategoryGroup,
@@ -35,6 +36,7 @@ export function CategoriesView({ groups }: { groups: CategoryGroup[] }) {
           type={type}
           label={categoryTypeLabels[type]}
           groups={groups.filter((g) => g.type === type)}
+          allGroups={groups}
           onAddGroup={(name) => void notify(addCategoryGroup(type, name), "Group added")}
           onRenameGroup={(groupId, name) =>
             void notify(renameCategoryGroup(groupId, name), "Group renamed")
@@ -42,6 +44,9 @@ export function CategoriesView({ groups }: { groups: CategoryGroup[] }) {
           onDeleteGroup={(groupId) => void notify(deleteCategoryGroup(groupId), "Group deleted")}
           onAddCategory={(groupId, name, icon) =>
             void notify(addCategory(groupId, name, icon), "Category added")
+          }
+          onUpdateCategory={(categoryId, patch) =>
+            void notify(updateCategory(categoryId, patch), "Category updated")
           }
           onDeleteCategory={(_groupId, categoryId) =>
             void notify(deleteCategory(categoryId), "Category deleted")

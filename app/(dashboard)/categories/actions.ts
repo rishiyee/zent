@@ -63,6 +63,35 @@ export async function addCategory(groupId: string, name: string, icon: string) {
   revalidateCategories()
 }
 
+export async function updateCategory(
+  categoryId: string,
+  patch: { name?: string; icon?: string; groupId?: string }
+) {
+  const supabase = await createClient()
+
+  const dbPatch: Record<string, unknown> = {}
+  if (patch.name !== undefined) dbPatch.name = patch.name
+  if (patch.icon !== undefined) dbPatch.icon = patch.icon
+
+  if (patch.groupId !== undefined) {
+    const { count, error: countError } = await supabase
+      .from("categories")
+      .select("id", { count: "exact", head: true })
+      .eq("group_id", patch.groupId)
+    if (countError) throw countError
+    dbPatch.group_id = patch.groupId
+    dbPatch.sort_order = count ?? 0
+  }
+
+  if (Object.keys(dbPatch).length === 0) return
+
+  const { error } = await supabase.from("categories").update(dbPatch).eq("id", categoryId)
+  if (error) {
+    throw friendlyError(error, `"${patch.name ?? "That category"}" already exists in this group.`)
+  }
+  revalidateCategories()
+}
+
 export async function deleteCategory(categoryId: string) {
   const supabase = await createClient()
   const { error } = await supabase.from("categories").delete().eq("id", categoryId)
