@@ -5,13 +5,11 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   ArrowLeftRight,
-  ChevronsUpDown,
   CreditCard,
   LayoutDashboard,
   PieChart,
   PiggyBank,
   Receipt,
-  Settings,
   Tags,
   Wallet,
 } from "lucide-react"
@@ -21,12 +19,6 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Sidebar,
   SidebarContent,
@@ -128,45 +120,27 @@ export function AppSidebar({
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <SidebarMenuButton
-                    size="lg"
-                    className="data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground"
-                  />
-                }
-              >
-                <Avatar className="size-8 rounded-lg">
-                  {user.avatarUrl && (
-                    <AvatarImage src={user.avatarUrl} alt={user.name} />
-                  )}
-                  <AvatarFallback className="rounded-lg">
-                    {initials(user.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {user.email}
-                  </span>
-                </div>
-                <ChevronsUpDown className="ml-auto" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-(--anchor-width) min-w-56 rounded-lg"
-                side="top"
-                align="end"
-                sideOffset={4}
-              >
-                <DropdownMenuItem
-                  render={<Link href="/settings" />}
-                >
-                  <Settings />
-                  Settings
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <SidebarMenuButton
+              size="lg"
+              render={<Link href="/settings" />}
+              isActive={pathname === "/settings"}
+              tooltip="Settings"
+            >
+              <Avatar className="size-8 rounded-lg">
+                {user.avatarUrl && (
+                  <AvatarImage src={user.avatarUrl} alt={user.name} />
+                )}
+                <AvatarFallback className="rounded-lg">
+                  {initials(user.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">{user.name}</span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {user.email}
+                </span>
+              </div>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
