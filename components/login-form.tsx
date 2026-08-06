@@ -29,10 +29,10 @@ export function LoginForm({
     if (state?.error) toast.add({ title: state.error, type: "error" })
   }, [state])
 
-  async function handleGithubLogin() {
+  async function handleOAuthLogin(provider: "github" | "google") {
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "github",
+      provider,
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     })
     if (error) toast.add({ title: error.message, type: "error" })
@@ -85,7 +85,7 @@ export function LoginForm({
           <Button
             variant="outline"
             type="button"
-            onClick={handleGithubLogin}
+            onClick={() => handleOAuthLogin("github")}
             disabled={pending}
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -94,8 +94,10 @@ export function LoginForm({
                 fill="currentColor"
               />
             </svg>
-            Login with GitHub
+            GitHub
           </Button>
+        </Field>
+        <Field>
           <FieldDescription className="text-center">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="underline underline-offset-4">
