@@ -11,7 +11,7 @@ import {
   statusMeta,
   transactionAccountOptions,
 } from "@/lib/transactions"
-import { CategoryGroup } from "@/lib/categories"
+import { CategoryGroup, flattenCategoryNames } from "@/lib/categories"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -55,6 +55,23 @@ export function TransactionFormFields({
   categoryGroups: CategoryGroup[]
   merchants: string[]
 }) {
+  const categoryGroupsForType = categoryGroups.filter(
+    (group) => group.type === value.type
+  )
+
+  function handleTypeChange(next: TransactionType) {
+    const validNames = new Set(
+      flattenCategoryNames(categoryGroups.filter((group) => group.type === next))
+    )
+    const categoryStillValid =
+      value.category === UNCATEGORIZED || validNames.has(value.category)
+
+    onChange({
+      type: next,
+      ...(categoryStillValid ? {} : { category: UNCATEGORIZED }),
+    })
+  }
+
   return (
     <>
       <div className="flex flex-col gap-2">
@@ -118,7 +135,7 @@ export function TransactionFormFields({
             items={{ expense: "Expense", income: "Income" }}
             value={value.type}
             onValueChange={(next: TransactionType | null) =>
-              next && onChange({ type: next })
+              next && handleTypeChange(next)
             }
           >
             <SelectTrigger className="w-full">
@@ -158,7 +175,7 @@ export function TransactionFormFields({
         <div className="flex flex-col gap-2">
           <Label>Category</Label>
           <CategorySelect
-            groups={categoryGroups}
+            groups={categoryGroupsForType}
             value={value.category || UNCATEGORIZED}
             onValueChange={(next) => onChange({ category: next })}
             className="w-full"

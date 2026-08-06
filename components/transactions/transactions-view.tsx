@@ -3,6 +3,7 @@
 import { addTransaction } from "@/app/(dashboard)/transactions/actions"
 import { CategoryRule, Transaction, TransactionAccountOption } from "@/lib/transactions"
 import { CategoryGroup } from "@/lib/categories"
+import { notify } from "@/components/ui/toast"
 import { useCurrency } from "@/components/currency-provider"
 import { AddTransactionDrawer } from "@/components/transactions/add-transaction-drawer"
 import { getColumns } from "@/components/transactions/columns"
@@ -32,7 +33,7 @@ export function TransactionsView({
           </p>
         </div>
         <AddTransactionDrawer
-          onAdd={(transaction) => addTransaction(transaction)}
+          onAdd={(transaction) => void notify(addTransaction(transaction), "Transaction added")}
           rules={rules}
           accounts={accounts}
           categoryGroups={categoryGroups}

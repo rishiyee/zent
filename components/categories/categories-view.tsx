@@ -15,6 +15,7 @@ import {
   categoryTypeLabels,
   categoryTypeOrder,
 } from "@/lib/categories"
+import { notify } from "@/components/ui/toast"
 import { CategoryTypeSection } from "@/components/categories/category-type-section"
 
 export function CategoriesView({ groups }: { groups: CategoryGroup[] }) {
@@ -34,15 +35,19 @@ export function CategoriesView({ groups }: { groups: CategoryGroup[] }) {
           type={type}
           label={categoryTypeLabels[type]}
           groups={groups.filter((g) => g.type === type)}
-          onAddGroup={(name) => void addCategoryGroup(type, name)}
-          onRenameGroup={(groupId, name) => void renameCategoryGroup(groupId, name)}
-          onDeleteGroup={(groupId) => void deleteCategoryGroup(groupId)}
-          onAddCategory={(groupId, name, icon) =>
-            void addCategory(groupId, name, icon)
+          onAddGroup={(name) => void notify(addCategoryGroup(type, name), "Group added")}
+          onRenameGroup={(groupId, name) =>
+            void notify(renameCategoryGroup(groupId, name), "Group renamed")
           }
-          onDeleteCategory={(_groupId, categoryId) => void deleteCategory(categoryId)}
+          onDeleteGroup={(groupId) => void notify(deleteCategoryGroup(groupId), "Group deleted")}
+          onAddCategory={(groupId, name, icon) =>
+            void notify(addCategory(groupId, name, icon), "Category added")
+          }
+          onDeleteCategory={(_groupId, categoryId) =>
+            void notify(deleteCategory(categoryId), "Category deleted")
+          }
           onMoveCategory={(categoryId, _fromGroupId, toGroupId, toIndex) =>
-            void moveCategory(categoryId, toGroupId, toIndex)
+            void notify(moveCategory(categoryId, toGroupId, toIndex))
           }
         />
       ))}

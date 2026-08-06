@@ -19,6 +19,7 @@ import {
   TransactionAccountOption,
   UNCATEGORIZED,
 } from "@/lib/transactions"
+import { notify } from "@/components/ui/toast"
 import { SummaryCards } from "@/components/transactions/summary-cards"
 import { BulkEditDrawer, BulkEditPatch } from "@/components/transactions/bulk-edit-drawer"
 import { EditTransactionDrawer } from "@/components/transactions/edit-transaction-drawer"
@@ -111,28 +112,31 @@ export function TransactionsPageContent({
     })
     if (detailId === id) setDetailId(null)
     if (editId === id) setEditId(null)
-    void deleteTransaction(id)
+    void notify(deleteTransaction(id), "Transaction deleted")
   }
 
   function handleSaveEdit(id: string, patch: Partial<Transaction>) {
-    void updateTransaction(id, patch)
+    void notify(updateTransaction(id, patch), "Transaction updated")
   }
 
   function handleMarkReviewed(id: string) {
-    handleSaveEdit(id, { status: "reviewed" })
+    void notify(updateTransaction(id, { status: "reviewed" }))
   }
 
   function handleSplit(original: Transaction, splits: Parameters<typeof splitTransaction>[1]) {
     setSplitId(null)
     if (detailId === original.id) setDetailId(null)
     if (editId === original.id) setEditId(null)
-    void splitTransaction(original.id, splits)
+    void notify(splitTransaction(original.id, splits), "Transaction split")
   }
 
   function handleBulkApply(patch: BulkEditPatch) {
     const ids = Object.keys(selected)
     setSelected({})
-    void bulkUpdateTransactions(ids, patch)
+    void notify(
+      bulkUpdateTransactions(ids, patch),
+      `Updated ${ids.length} transaction${ids.length === 1 ? "" : "s"}`
+    )
   }
 
   return (
@@ -155,7 +159,7 @@ export function TransactionsPageContent({
           rules={rules}
           categoryGroups={categoryGroups}
           merchants={merchants}
-          onAdd={(txn) => void addTransaction(txn)}
+          onAdd={(txn) => void notify(addTransaction(txn), "Transaction added")}
           accounts={accounts}
           selectedCount={selectedCount}
           onBulkEdit={() => setBulkEditOpen(true)}

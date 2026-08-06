@@ -22,7 +22,7 @@ function ToastViewport({ className, ...props }: ToastPrimitive.Viewport.Props) {
     <ToastPrimitive.Viewport
       data-slot="toast-viewport"
       className={cn(
-        "pointer-events-none fixed inset-x-4 bottom-4 z-50 mx-auto w-auto max-w-sm outline-none sm:right-4 sm:left-auto sm:mx-0 sm:w-full",
+        "pointer-events-none fixed inset-x-4 bottom-4 z-[100] mx-auto w-auto max-w-sm outline-none sm:right-4 sm:left-auto sm:mx-0 sm:w-full",
         className
       )}
       {...props}
@@ -217,6 +217,25 @@ function Toaster({
 const createToastManager = ToastPrimitive.createToastManager
 const useToastManager = ToastPrimitive.useToastManager
 
+/**
+ * Awaits a server action, toasting success (if a title is given) or the
+ * thrown error message. Fire-and-forget callers can do `notify(action(...), "Saved")`
+ * without needing their own try/catch.
+ */
+async function notify<T>(promise: Promise<T>, successTitle?: string): Promise<T | undefined> {
+  try {
+    const result = await promise
+    if (successTitle) toast.add({ title: successTitle, type: "success" })
+    return result
+  } catch (error) {
+    toast.add({
+      title: error instanceof Error ? error.message : "Something went wrong",
+      type: "error",
+    })
+    return undefined
+  }
+}
+
 export {
   Toaster,
   Toast,
@@ -229,6 +248,7 @@ export {
   ToastTitle,
   ToastViewport,
   createToastManager,
+  notify,
   toast,
   useToastManager,
 }

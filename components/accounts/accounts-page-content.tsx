@@ -8,6 +8,7 @@ import {
   updateAccount,
 } from "@/app/(dashboard)/accounts/actions"
 import { Account } from "@/lib/accounts"
+import { notify } from "@/components/ui/toast"
 import { AccountDetailSheet } from "@/components/accounts/account-detail-sheet"
 import { AccountsView } from "@/components/accounts/accounts-view"
 import { EditAccountDrawer } from "@/components/accounts/edit-account-drawer"
@@ -32,7 +33,7 @@ export function AccountsPageContent({
   function handleDelete(id: string) {
     if (detailId === id) setDetailId(null)
     if (editId === id) setEditId(null)
-    void deleteAccount(id)
+    void notify(deleteAccount(id), "Account deleted")
   }
 
   return (
@@ -40,7 +41,7 @@ export function AccountsPageContent({
       <NetWorthSummary accounts={accounts} />
       <AccountsView
         data={accounts}
-        onAdd={(account) => void addAccount(account)}
+        onAdd={(account) => void notify(addAccount(account), "Account added")}
         onRowClick={(account) => setDetailId(account.id)}
       />
       <AccountDetailSheet
@@ -54,7 +55,7 @@ export function AccountsPageContent({
         account={editAccount}
         open={!!editId}
         onOpenChange={(open) => !open && setEditId(null)}
-        onSave={(id, patch) => void updateAccount(id, patch)}
+        onSave={(id, patch) => void notify(updateAccount(id, patch), "Account updated")}
       />
     </>
   )

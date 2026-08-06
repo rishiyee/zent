@@ -2,24 +2,58 @@
 
 import { revalidatePath } from "next/cache"
 
+import { balanceDelta } from "@/lib/accounts"
 import { toDbAccountId } from "@/lib/data/transactions"
 import { createClient } from "@/lib/supabase/server"
-import { Transaction, TransactionStatus } from "@/lib/transactions"
+import { Transaction, TransactionStatus, TransactionType } from "@/lib/transactions"
 
 function revalidateTransactions() {
   revalidatePath("/transactions")
+  revalidatePath("/accounts")
+  revalidatePath("/credit-cards")
   revalidatePath("/")
+}
+
+/** Applies (sign=1) or reverses (sign=-1) a transaction's effect on its account's balance. */
+async function adjustAccountBalance(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  accountId: string | null,
+  type: TransactionType,
+  amount: number,
+  sign: 1 | -1
+) {
+  if (!accountId) return
+
+  const { data: account, error: fetchError } = await supabase
+    .from("accounts")
+    .select("category, balance")
+    .eq("id", accountId)
+    .single()
+  if (fetchError) throw fetchError
+
+  const delta = sign * balanceDelta(account.category, type, amount)
+  if (delta === 0) return
+
+  const { error: updateError } = await supabase
+    .from("accounts")
+    .update({
+      balance: Number(account.balance) + delta,
+      last_updated: new Date().toISOString().slice(0, 10),
+    })
+    .eq("id", accountId)
+  if (updateError) throw updateError
 }
 
 export async function addTransaction(transaction: Omit<Transaction, "id">) {
   const supabase = await createClient()
+  const dbAccountId = toDbAccountId(transaction.accountId)
   const { data, error } = await supabase
     .from("transactions")
     .insert({
       date: transaction.date,
       description: transaction.description,
       category: transaction.category,
-      account_id: toDbAccountId(transaction.accountId),
+      account_id: dbAccountId,
       type: transaction.type,
       amount: transaction.amount,
       status: transaction.status,
@@ -39,11 +73,20 @@ export async function addTransaction(transaction: Omit<Transaction, "id">) {
     if (tagError) throw tagError
   }
 
+  await adjustAccountBalance(supabase, dbAccountId, transaction.type, transaction.amount, 1)
+
   revalidateTransactions()
 }
 
 export async function updateTransaction(id: string, patch: Partial<Transaction>) {
   const supabase = await createClient()
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("transactions")
+    .select("account_id, type, amount")
+    .eq("id", id)
+    .single()
+  if (fetchError) throw fetchError
 
   const dbPatch: Record<string, unknown> = {}
   if (patch.date !== undefined) dbPatch.date = patch.date
@@ -77,13 +120,38 @@ export async function updateTransaction(id: string, patch: Partial<Transaction>)
     }
   }
 
+  const newAccountId =
+    patch.accountId !== undefined ? toDbAccountId(patch.accountId) : existing.account_id
+  const newType = patch.type ?? existing.type
+  const newAmount = patch.amount ?? Number(existing.amount)
+
+  if (
+    newAccountId !== existing.account_id ||
+    newType !== existing.type ||
+    newAmount !== Number(existing.amount)
+  ) {
+    await adjustAccountBalance(supabase, existing.account_id, existing.type, Number(existing.amount), -1)
+    await adjustAccountBalance(supabase, newAccountId, newType, newAmount, 1)
+  }
+
   revalidateTransactions()
 }
 
 export async function deleteTransaction(id: string) {
   const supabase = await createClient()
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("transactions")
+    .select("account_id, type, amount")
+    .eq("id", id)
+    .single()
+  if (fetchError) throw fetchError
+
   const { error } = await supabase.from("transactions").delete().eq("id", id)
   if (error) throw error
+
+  await adjustAccountBalance(supabase, existing.account_id, existing.type, Number(existing.amount), -1)
+
   revalidateTransactions()
 }
 
@@ -167,16 +235,17 @@ export async function importTransactions(
   if (error) throw error
 
   if (adjustBalance && dbAccountId) {
-    const delta = rows.reduce(
-      (sum, row) => sum + (row.type === "income" ? row.amount : -row.amount),
-      0
-    )
     const { data: account, error: fetchError } = await supabase
       .from("accounts")
-      .select("balance")
+      .select("category, balance")
       .eq("id", dbAccountId)
       .single()
     if (fetchError) throw fetchError
+
+    const delta = rows.reduce(
+      (sum, row) => sum + balanceDelta(account.category, row.type, row.amount),
+      0
+    )
 
     const { error: updateError } = await supabase
       .from("accounts")

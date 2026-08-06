@@ -30,6 +30,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { notify } from "@/components/ui/toast"
 import { AddCreditCardDrawer } from "@/components/credit-cards/add-credit-card-drawer"
 import { CreditCardDetailSheet } from "@/components/credit-cards/credit-card-detail-sheet"
 import { EditCreditCardDrawer } from "@/components/credit-cards/edit-credit-card-drawer"
@@ -87,23 +88,23 @@ export function CreditCardsView({
   const blendedUtilization = totalLimit > 0 ? totalBalance / totalLimit : 0
 
   function addCard(card: Omit<CreditCard, "id" | "accountId">) {
-    void addCreditCard(card)
+    void notify(addCreditCard(card), "Credit card added")
   }
 
   function saveCard(id: string, patch: Omit<CreditCard, "id" | "accountId">) {
     const card = cards.find((c) => c.id === id)
     if (!card) return
-    void updateCreditCard(id, card.accountId, patch)
+    void notify(updateCreditCard(id, card.accountId, patch), "Credit card updated")
   }
 
   function deleteCard(id: string) {
     const card = cards.find((c) => c.id === id)
     if (!card) return
-    void deleteCreditCard(card.accountId)
+    void notify(deleteCreditCard(card.accountId), "Credit card deleted")
   }
 
   function recordPayment(payment: Omit<CreditCardPayment, "id">) {
-    void addPayment(payment)
+    void notify(addPayment(payment), "Payment recorded")
   }
 
   function openEdit(card: CreditCard) {

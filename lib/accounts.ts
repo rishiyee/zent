@@ -76,6 +76,20 @@ export const valuableCategories: AccountCategory[] = [
   "other",
 ]
 
+/**
+ * Signed balance change for a transaction against an account of the given category.
+ * Asset accounts: income adds, expense subtracts. Liability accounts (credit cards,
+ * loans) are inverted — an expense increases what's owed, income/refund reduces it.
+ */
+export function balanceDelta(
+  category: AccountCategory,
+  type: "income" | "expense",
+  amount: number
+): number {
+  const signed = type === "income" ? amount : -amount
+  return categoryMeta[category].kind === "liability" ? -signed : signed
+}
+
 export function netWorthSummary(data: Account[]) {
   const assetAccounts = data.filter(
     (a) => categoryMeta[a.category].kind === "asset"

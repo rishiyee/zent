@@ -100,9 +100,6 @@ export function TransactionDetailSheet({
               <DetailRow label="Source">
                 <span className="capitalize">{transaction.source}</span>
               </DetailRow>
-              <DetailRow label="Transaction ID">
-                <span className="font-mono text-xs">{transaction.id}</span>
-              </DetailRow>
               {transaction.notes && (
                 <>
                   <Separator className="my-3" />

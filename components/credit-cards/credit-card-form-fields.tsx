@@ -1,6 +1,7 @@
 "use client"
 
 import { MinimumPaymentType } from "@/lib/credit-cards"
+import { useCurrency } from "@/components/currency-provider"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -27,7 +28,7 @@ export type CreditCardFormValue = {
 export function emptyCreditCardForm(): CreditCardFormValue {
   return {
     name: "",
-    balance: "",
+    balance: "0",
     creditLimit: "",
     apr: "",
     statementDay: "1",
@@ -38,6 +39,17 @@ export function emptyCreditCardForm(): CreditCardFormValue {
   }
 }
 
+function ordinal(day: number): string {
+  if (day % 10 === 1 && day !== 11) return `${day}st`
+  if (day % 10 === 2 && day !== 12) return `${day}nd`
+  if (day % 10 === 3 && day !== 13) return `${day}rd`
+  return `${day}th`
+}
+
+const dayItems = Object.fromEntries(
+  Array.from({ length: 28 }, (_, i) => i + 1).map((day) => [String(day), ordinal(day)])
+)
+
 export function CreditCardFormFields({
   value,
   onChange,
@@ -45,6 +57,16 @@ export function CreditCardFormFields({
   value: CreditCardFormValue
   onChange: (patch: Partial<CreditCardFormValue>) => void
 }) {
+  const { format } = useCurrency()
+
+  const balance = Number.parseFloat(value.balance)
+  const creditLimit = Number.parseFloat(value.creditLimit)
+  const hasValidRange =
+    !Number.isNaN(balance) && !Number.isNaN(creditLimit) && creditLimit > 0
+  const utilizationPct = hasValidRange
+    ? Math.min(Math.round((balance / creditLimit) * 100), 999)
+    : null
+
   return (
     <>
       <div className="flex flex-col gap-2">
@@ -55,6 +77,7 @@ export function CreditCardFormFields({
           value={value.name}
           onChange={(e) => onChange({ name: e.target.value })}
           required
+          autoFocus
         />
       </div>
       <div className="grid grid-cols-2 gap-4">
@@ -87,36 +110,65 @@ export function CreditCardFormFields({
           />
         </div>
       </div>
+      {hasValidRange && (
+        <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">
+            {format(Math.max(creditLimit - balance, 0))} available
+          </span>
+          <span
+            className={
+              utilizationPct !== null && utilizationPct >= 90
+                ? "font-medium text-destructive"
+                : "font-medium text-muted-foreground"
+            }
+          >
+            {utilizationPct}% utilized
+          </span>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-2">
           <Label htmlFor="cc-statement-day">Statement closes on</Label>
-          <Input
-            id="cc-statement-day"
-            type="number"
-            inputMode="numeric"
-            min="1"
-            max="28"
-            placeholder="Day of month"
+          <Select
+            items={dayItems}
             value={value.statementDay}
-            onChange={(e) => onChange({ statementDay: e.target.value })}
-            required
-          />
+            onValueChange={(next: string | null) => next && onChange({ statementDay: next })}
+          >
+            <SelectTrigger id="cc-statement-day" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(dayItems).map(([day, label]) => (
+                <SelectItem key={day} value={day}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="cc-due-day">Payment due on</Label>
-          <Input
-            id="cc-due-day"
-            type="number"
-            inputMode="numeric"
-            min="1"
-            max="28"
-            placeholder="Day of month"
+          <Select
+            items={dayItems}
             value={value.paymentDueDay}
-            onChange={(e) => onChange({ paymentDueDay: e.target.value })}
-            required
-          />
+            onValueChange={(next: string | null) => next && onChange({ paymentDueDay: next })}
+          >
+            <SelectTrigger id="cc-due-day" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(dayItems).map(([day, label]) => (
+                <SelectItem key={day} value={day}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
+      <p className="text-xs text-muted-foreground">
+        Day of the month (1st–28th) your statement closes and your payment is due — each recurs monthly.
+      </p>
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-2">
           <Label>Minimum payment</Label>
