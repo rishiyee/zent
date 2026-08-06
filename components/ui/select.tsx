@@ -64,14 +64,30 @@ function SelectContent({
   align = "center",
   alignOffset = 0,
   alignItemWithTrigger = true,
+  container,
   ...props
 }: SelectPrimitive.Popup.Props &
   Pick<
     SelectPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset" | "alignItemWithTrigger"
-  >) {
+  > &
+  Pick<SelectPrimitive.Portal.Props, "container">) {
   return (
-    <SelectPrimitive.Portal>
+    // Explicitly target `document.body` instead of inheriting the ambient
+    // FloatingPortal `PortalContext`. Without this, a Select rendered inside
+    // another floating primitive's portal (e.g. a Popover) will itself portal
+    // into that ancestor's portal container instead of `body` — see
+    // `useFloatingPortalNode` in `@base-ui/react/floating-ui-react`, which
+    // falls back to `parentPortalNode ?? document.body`. That coupling is
+    // harmless today only because the ancestor's container happens to be an
+    // untransformed direct child of `body`; forcing `document.body` here
+    // removes the dependency on that assumption for every Select, including
+    // ones nested inside a Popover/Dialog/Drawer now or in the future.
+    <SelectPrimitive.Portal
+      container={
+        container ?? (typeof document !== "undefined" ? document.body : undefined)
+      }
+    >
       <SelectPrimitive.Positioner
         side={side}
         sideOffset={sideOffset}
