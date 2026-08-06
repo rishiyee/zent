@@ -2,7 +2,9 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { LogOut } from "lucide-react"
 
+import { logout } from "@/app/login/actions"
 import { cn } from "@/lib/utils"
 
 const accountLinks = [
@@ -65,6 +67,18 @@ export function SettingsNav() {
     <div className="flex w-full max-w-56 shrink-0 flex-col gap-6">
       <SettingsLinkGroup title="Account" links={accountLinks} pathname={pathname} />
       <SettingsLinkGroup title="Household" links={householdLinks} pathname={pathname} />
+      <div className="rounded-xl border">
+        <nav className="flex flex-col gap-0.5 p-2">
+          <button
+            type="button"
+            onClick={() => logout()}
+            className="flex items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-destructive hover:bg-destructive/10"
+          >
+            <LogOut className="size-4" />
+            Log out
+          </button>
+        </nav>
+      </div>
     </div>
   )
 }

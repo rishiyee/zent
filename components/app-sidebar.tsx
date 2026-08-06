@@ -8,7 +8,6 @@ import {
   ChevronsUpDown,
   CreditCard,
   LayoutDashboard,
-  LogOut,
   PieChart,
   PiggyBank,
   Receipt,
@@ -17,7 +16,6 @@ import {
   Wallet,
 } from "lucide-react"
 
-import { logout } from "@/app/login/actions"
 import {
   Avatar,
   AvatarFallback,
@@ -27,7 +25,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -83,7 +80,7 @@ export function AppSidebar({
                 <Wallet className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">Ledger</span>
+                <span className="truncate font-semibold">Zent</span>
                 <span className="truncate text-xs text-muted-foreground">
                   Personal Finance
                 </span>
@@ -131,16 +128,6 @@ export function AppSidebar({
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              render={<Link href="/settings" />}
-              isActive={pathname === "/settings"}
-              tooltip="Settings"
-            >
-              <Settings />
-              <span>Settings</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
@@ -172,14 +159,11 @@ export function AppSidebar({
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem>
-                  <CreditCard />
-                  Billing
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => logout()}>
-                  <LogOut />
-                  Log out
+                <DropdownMenuItem
+                  render={<Link href="/settings" />}
+                >
+                  <Settings />
+                  Settings
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
