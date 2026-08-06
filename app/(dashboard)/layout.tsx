@@ -7,8 +7,10 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardLayout({
   children,
+  settingsModal,
 }: Readonly<{
   children: React.ReactNode;
+  settingsModal: React.ReactNode;
 }>) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -31,6 +33,7 @@ export default async function DashboardLayout({
           }}
         />
         <SidebarInset>{children}</SidebarInset>
+        {settingsModal}
       </SidebarProvider>
     </CurrencyProvider>
   );

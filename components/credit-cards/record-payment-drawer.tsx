@@ -84,9 +84,8 @@ export function RecordPaymentDrawer({
             <DrawerHeader>
               <DrawerTitle>Record payment</DrawerTitle>
               <DrawerDescription>
-                Log a payment made toward {card.name}. This doesn&apos;t change
-                the card&apos;s balance yet — update that separately via Edit
-                once the payment clears.
+                Log a payment made toward {card.name}. The card&apos;s outstanding
+                balance and utilization will update automatically.
               </DrawerDescription>
             </DrawerHeader>
             <div className="flex flex-col gap-4 overflow-y-auto p-4">

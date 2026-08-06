@@ -91,14 +91,50 @@ export async function deleteCreditCard(accountId: string) {
 
 export async function addPayment(payment: Omit<CreditCardPayment, "id">) {
   const supabase = await createClient()
-  const { error } = await supabase.from("credit_card_payments").insert({
-    credit_card_id: payment.creditCardId,
-    source_account_id: payment.sourceAccountId,
-    amount: payment.amount,
-    paid_on: payment.paidOn,
-    notes: payment.notes || null,
-  })
-  if (error) throw error
-  revalidatePath("/credit-cards")
-  revalidatePath("/")
+
+  const { data: card, error: cardError } = await supabase
+    .from("credit_cards")
+    .select("account_id")
+    .eq("id", payment.creditCardId)
+    .single()
+  if (cardError) throw cardError
+
+  const { data: account, error: accountError } = await supabase
+    .from("accounts")
+    .select("balance")
+    .eq("id", card.account_id)
+    .single()
+  if (accountError) throw accountError
+
+  const { data: recordedPayment, error: paymentError } = await supabase
+    .from("credit_card_payments")
+    .insert({
+      credit_card_id: payment.creditCardId,
+      source_account_id: payment.sourceAccountId,
+      amount: payment.amount,
+      paid_on: payment.paidOn,
+      notes: payment.notes || null,
+    })
+    .select("id")
+    .single()
+  if (paymentError) throw paymentError
+
+  const nextBalance = Math.max(0, Number(account.balance) - payment.amount)
+  const { error: balanceError } = await supabase
+    .from("accounts")
+    .update({
+      balance: nextBalance,
+      last_updated: payment.paidOn,
+    })
+    .eq("id", card.account_id)
+
+  if (balanceError) {
+    await supabase
+      .from("credit_card_payments")
+      .delete()
+      .eq("id", recordedPayment.id)
+    throw balanceError
+  }
+
+  revalidateCreditCards()
 }

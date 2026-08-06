@@ -2,6 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowDown, ArrowUp, ArrowUpDown, MoreHorizontal } from "lucide-react"
+import Link from "next/link"
 
 import { Transaction, TransactionAccountOption, accountName } from "@/lib/transactions"
 import { Badge } from "@/components/ui/badge"
@@ -12,7 +13,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { TransactionStatusBadge } from "@/components/transactions/transaction-status-badge"
@@ -165,7 +165,7 @@ export function getColumns(
   {
     id: "actions",
     enableHiding: false,
-    cell: () => (
+    cell: ({ row }) => (
       <DropdownMenu>
         <DropdownMenuTrigger
           render={<Button variant="ghost" size="icon-sm" className="ml-2" />}
@@ -174,11 +174,12 @@ export function getColumns(
           <span className="sr-only">Open menu</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuItem>View details</DropdownMenuItem>
-          <DropdownMenuItem>Edit transaction</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
+          <DropdownMenuLabel>Transaction</DropdownMenuLabel>
+          <DropdownMenuItem
+            render={<Link href={`/transactions?transaction=${row.original.id}`} />}
+          >
+            Open in transactions
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     ),
