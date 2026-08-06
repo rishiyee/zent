@@ -30,11 +30,13 @@ export function SignupForm({
     if (state?.error) toast.add({ title: state.error, type: "error" })
   }, [state])
 
-  async function handleOAuthSignup(provider: "github" | "google") {
+  async function handleOAuthSignup(provider: "github") {
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?provider=${provider}`,
+      },
     })
     if (error) toast.add({ title: error.message, type: "error" })
   }

@@ -1,10 +1,14 @@
 "use server"
 
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
+import { AUTH_METHOD_COOKIE } from "@/lib/auth-method"
 import { createClient } from "@/lib/supabase/server"
 
 export type AuthFormState = { error: string } | undefined
+
+const AUTH_METHOD_COOKIE_MAX_AGE = 60 * 60 * 24 * 365
 
 export async function login(
   _prevState: AuthFormState,
@@ -23,6 +27,13 @@ export async function login(
   if (error) {
     return { error: error.message }
   }
+
+  const cookieStore = await cookies()
+  cookieStore.set(AUTH_METHOD_COOKIE, "email", {
+    path: "/",
+    maxAge: AUTH_METHOD_COOKIE_MAX_AGE,
+    sameSite: "lax",
+  })
 
   redirect("/")
 }

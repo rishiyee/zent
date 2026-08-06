@@ -5,9 +5,11 @@ import * as React from "react"
 import { useActionState } from "react"
 
 import { login } from "@/app/login/actions"
+import { AuthMethod } from "@/lib/auth-method"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import { toast } from "@/components/ui/toast"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Field,
@@ -20,8 +22,9 @@ import { Input } from "@/components/ui/input"
 
 export function LoginForm({
   className,
+  lastMethod,
   ...props
-}: React.ComponentProps<"form">) {
+}: React.ComponentProps<"form"> & { lastMethod?: AuthMethod }) {
   const [state, formAction, pending] = useActionState(login, undefined)
   const [email, setEmail] = React.useState("")
 
@@ -29,11 +32,13 @@ export function LoginForm({
     if (state?.error) toast.add({ title: state.error, type: "error" })
   }, [state])
 
-  async function handleOAuthLogin(provider: "github" | "google") {
+  async function handleOAuthLogin(provider: "github") {
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?provider=${provider}`,
+      },
     })
     if (error) toast.add({ title: error.message, type: "error" })
   }
@@ -52,7 +57,12 @@ export function LoginForm({
           </p>
         </div>
         <Field>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <div className="flex items-center gap-2">
+            <FieldLabel htmlFor="email">Email</FieldLabel>
+            {lastMethod === "email" && (
+              <Badge variant="secondary">Last used</Badge>
+            )}
+          </div>
           <Input
             id="email"
             name="email"
@@ -95,6 +105,11 @@ export function LoginForm({
               />
             </svg>
             GitHub
+            {lastMethod === "github" && (
+              <Badge variant="secondary" className="ml-auto">
+                Last used
+              </Badge>
+            )}
           </Button>
         </Field>
         <Field>
