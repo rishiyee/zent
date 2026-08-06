@@ -33,6 +33,66 @@ import {
 
 const typeItems = { income: "Income", expense: "Expense" }
 
+function IconPicker({
+  icon,
+  onChange,
+}: {
+  icon: string
+  onChange: (icon: string) => void
+}) {
+  return (
+    <div className="flex flex-wrap gap-1">
+      {categoryIconPresets.map((presetIcon) => (
+        <button
+          key={presetIcon}
+          type="button"
+          onClick={() => onChange(presetIcon)}
+          className={cn(
+            "flex size-7 items-center justify-center rounded-md text-base hover:bg-muted",
+            icon === presetIcon && "bg-muted ring-1 ring-ring"
+          )}
+        >
+          {presetIcon}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function CategoryCreateForm({
+  initialIcon = categoryIconPresets[0],
+  submitLabel,
+  onSubmit,
+}: {
+  initialIcon?: string
+  submitLabel: string
+  onSubmit: (name: string, icon: string) => void
+}) {
+  const [name, setName] = React.useState("")
+  const [icon, setIcon] = React.useState(initialIcon)
+
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault()
+    if (!name.trim()) return
+    onSubmit(name.trim(), icon)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
+      <IconPicker icon={icon} onChange={setIcon} />
+      <Input
+        autoFocus
+        placeholder="Category name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+      <Button type="submit" size="sm" disabled={!name.trim()}>
+        <Plus /> {submitLabel}
+      </Button>
+    </form>
+  )
+}
+
 function CategoryEditorForm({
   allGroups,
   initialGroupId,
@@ -110,21 +170,7 @@ function CategoryEditorForm({
           section first.
         </p>
       )}
-      <div className="flex flex-wrap gap-1">
-        {categoryIconPresets.map((presetIcon) => (
-          <button
-            key={presetIcon}
-            type="button"
-            onClick={() => setIcon(presetIcon)}
-            className={cn(
-              "flex size-7 items-center justify-center rounded-md text-base hover:bg-muted",
-              icon === presetIcon && "bg-muted ring-1 ring-ring"
-            )}
-          >
-            {presetIcon}
-          </button>
-        ))}
-      </div>
+      <IconPicker icon={icon} onChange={setIcon} />
       <Input
         autoFocus
         placeholder="Category name"
@@ -376,12 +422,10 @@ export function CategoryGroupCard({
             Create Category
           </PopoverTrigger>
           <PopoverContent align="start" className="w-72">
-            <CategoryEditorForm
-              allGroups={allGroups}
-              initialGroupId={group.id}
+            <CategoryCreateForm
               submitLabel="Add category"
-              onSubmit={(groupId, name, icon) => {
-                onAddCategory(groupId, name, icon)
+              onSubmit={(name, icon) => {
+                onAddCategory(group.id, name, icon)
                 setAddOpen(false)
               }}
             />
