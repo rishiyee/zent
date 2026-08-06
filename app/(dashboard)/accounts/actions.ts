@@ -16,6 +16,8 @@ export async function addAccount(account: Omit<Account, "id">) {
   })
   if (error) throw error
   revalidatePath("/accounts")
+  revalidatePath("/transactions")
+  revalidatePath("/")
 }
 
 export async function updateAccount(

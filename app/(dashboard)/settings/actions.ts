@@ -18,8 +18,9 @@ export async function updateProfile(patch: {
     },
   })
   if (error) throw error
-  revalidatePath("/settings")
-  revalidatePath("/")
+  // "layout" type so the (dashboard) layout (sidebar user name/avatar, shown
+  // on every dashboard route) is busted too, not just the /settings page.
+  revalidatePath("/", "layout")
 }
 
 export async function updateAvatarUrl(avatarUrl: string) {
@@ -28,8 +29,7 @@ export async function updateAvatarUrl(avatarUrl: string) {
     data: { avatar_url: avatarUrl },
   })
   if (error) throw error
-  revalidatePath("/settings")
-  revalidatePath("/")
+  revalidatePath("/", "layout")
 }
 
 export async function updateDisplayPreferences(patch: {

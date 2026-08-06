@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server"
 function revalidateCreditCards() {
   revalidatePath("/credit-cards")
   revalidatePath("/accounts")
+  revalidatePath("/transactions")
   revalidatePath("/")
 }
 
