@@ -90,6 +90,7 @@ export function ImportCsvDialog({
     try {
       const count = await importTransactions(rows, accountId, adjustBalance)
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions })
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts })
       toast.add({
         title: `Imported ${count} transaction${count === 1 ? "" : "s"}`,
         type: "success",

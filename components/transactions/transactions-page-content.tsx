@@ -115,6 +115,7 @@ export function TransactionsPageContent({
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: queryKeys.transactions })
     queryClient.invalidateQueries({ queryKey: queryKeys.creditCards })
+    queryClient.invalidateQueries({ queryKey: queryKeys.accounts })
   }
 
   function handleDelete(id: string) {

@@ -2,8 +2,13 @@
 
 import { revalidatePath } from "next/cache"
 
+import { getAccounts } from "@/lib/data/accounts"
 import { Account } from "@/lib/accounts"
 import { createClient } from "@/lib/supabase/server"
+
+export async function getAccountsData() {
+  return getAccounts()
+}
 
 export async function addAccount(account: Omit<Account, "id">) {
   const supabase = await createClient()
