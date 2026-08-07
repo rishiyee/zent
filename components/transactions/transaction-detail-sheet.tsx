@@ -84,7 +84,11 @@ export function TransactionDetailSheet({
                 <TransactionStatusBadge status={transaction.status} />
               </DetailRow>
               <DetailRow label="Category">
-                {transaction.category ? (
+                {transaction.linkedPaymentId ? (
+                  <Badge variant="outline" className="font-normal">
+                    Transfer
+                  </Badge>
+                ) : transaction.category ? (
                   <Badge variant="secondary" className="font-normal">
                     {transaction.category}
                   </Badge>
@@ -120,11 +124,11 @@ export function TransactionDetailSheet({
                   Mark as reviewed
                 </Button>
               )}
-              <Button onClick={() => onEdit(transaction)}>
+              {!transaction.linkedPaymentId && <Button onClick={() => onEdit(transaction)}>
                 <Pencil />
                 Edit transaction
-              </Button>
-              <Button
+              </Button>}
+              {!transaction.linkedPaymentId && <Button
                 variant="ghost"
                 className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                 onClick={() => {
@@ -134,7 +138,7 @@ export function TransactionDetailSheet({
               >
                 <Trash2 />
                 Delete transaction
-              </Button>
+              </Button>}
             </SheetFooter>
           </>
         )}

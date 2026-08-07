@@ -15,6 +15,7 @@ export type Transaction = {
   notes?: string
   goalId: string | null
   tagIds: string[]
+  linkedPaymentId?: string | null
 }
 
 export type CategoryRule = {
@@ -91,6 +92,7 @@ export function dailyCashFlow(data: Transaction[]): DailyCashFlow[] {
   const byDate = new Map<string, DailyCashFlow>()
 
   for (const t of data) {
+    if (t.linkedPaymentId) continue
     const entry = byDate.get(t.date) ?? { date: t.date, income: 0, expense: 0 }
     if (t.type === "income") {
       entry.income += t.amount
@@ -125,7 +127,10 @@ export function groupByDate(list: Transaction[]): DailyGroup[] {
       date,
       transactions: items,
       net: items.reduce(
-        (sum, txn) => sum + (txn.type === "income" ? txn.amount : -txn.amount),
+        (sum, txn) =>
+          txn.linkedPaymentId
+            ? sum
+            : sum + (txn.type === "income" ? txn.amount : -txn.amount),
         0
       ),
     }))

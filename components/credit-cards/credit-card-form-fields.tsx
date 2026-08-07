@@ -82,7 +82,7 @@ export function CreditCardFormFields({
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="cc-balance">Current balance</Label>
+          <Label htmlFor="cc-balance">Amount currently owed</Label>
           <Input
             id="cc-balance"
             type="number"
@@ -113,7 +113,7 @@ export function CreditCardFormFields({
       {hasValidRange && (
         <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm">
           <span className="text-muted-foreground">
-            {format(Math.max(creditLimit - balance, 0))} available
+            {format(Math.max(creditLimit - balance, 0))} available credit
           </span>
           <span
             className={
@@ -122,7 +122,7 @@ export function CreditCardFormFields({
                 : "font-medium text-muted-foreground"
             }
           >
-            {utilizationPct}% utilized
+            {utilizationPct}% of limit used
           </span>
         </div>
       )}

@@ -17,10 +17,10 @@ import {
 export function SummaryCards({ transactions }: { transactions: Transaction[] }) {
   const { format } = useCurrency()
   const income = transactions
-    .filter((t) => t.type === "income")
+    .filter((t) => t.type === "income" && !t.linkedPaymentId)
     .reduce((sum, t) => sum + t.amount, 0)
   const expenses = transactions
-    .filter((t) => t.type === "expense")
+    .filter((t) => t.type === "expense" && !t.linkedPaymentId)
     .reduce((sum, t) => sum + t.amount, 0)
   const balance = income - expenses
   const needsReview = transactions.filter(

@@ -105,7 +105,11 @@ export function getColumns(
     header: "Category",
     cell: ({ row }) => {
       const category = row.getValue("category") as string | null
-      return category ? (
+      return row.original.linkedPaymentId ? (
+        <Badge variant="outline" className="font-normal">
+          Transfer
+        </Badge>
+      ) : category ? (
         <Badge variant="secondary" className="font-normal">
           {category}
         </Badge>
@@ -156,7 +160,7 @@ export function getColumns(
               : "text-foreground"
           }`}
         >
-          {type === "income" ? "+" : "-"}
+          {row.original.linkedPaymentId ? "" : type === "income" ? "+" : "-"}
           {formatCurrency(amount)}
         </div>
       )

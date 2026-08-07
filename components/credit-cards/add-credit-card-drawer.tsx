@@ -89,8 +89,8 @@ export function AddCreditCardDrawer({
           <DrawerHeader>
             <DrawerTitle>Add credit card</DrawerTitle>
             <DrawerDescription>
-              Track a card&apos;s balance, limit, and due date. Balances are
-              entered manually — there&apos;s no bank sync in this demo.
+              Enter what you currently owe, the card&apos;s credit limit, and
+              its billing dates. Amounts are updated manually.
             </DrawerDescription>
           </DrawerHeader>
           <div className="flex flex-col gap-4 overflow-y-auto p-4">

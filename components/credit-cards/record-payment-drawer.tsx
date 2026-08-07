@@ -36,12 +36,16 @@ export function RecordPaymentDrawer({
   onOpenChange,
   accounts,
   onRecord,
+  payment = null,
+  onUpdate,
 }: {
   card: CreditCard | null
   open: boolean
   onOpenChange: (open: boolean) => void
   accounts: TransactionAccountOption[]
   onRecord: (payment: Omit<CreditCardPayment, "id">) => void
+  payment?: CreditCardPayment | null
+  onUpdate?: (id: string, payment: Omit<CreditCardPayment, "id">) => void
 }) {
   const [amount, setAmount] = React.useState("")
   const [date, setDate] = React.useState<Date | undefined>(new Date())
@@ -52,10 +56,16 @@ export function RecordPaymentDrawer({
   if (open !== wasOpen) {
     setWasOpen(open)
     if (open) {
-      setAmount("")
-      setDate(new Date())
-      setSourceAccountId(accounts[0]?.id ?? "CASH")
-      setNotes("")
+      setAmount(payment ? String(payment.amount) : "")
+      setDate(
+        payment
+          ? new Date(`${payment.paidOn}T00:00:00`)
+          : new Date()
+      )
+      setSourceAccountId(
+        payment?.sourceAccountId ?? accounts[0]?.id ?? "CASH"
+      )
+      setNotes(payment?.notes ?? "")
     }
   }
 
@@ -66,13 +76,15 @@ export function RecordPaymentDrawer({
     event.preventDefault()
     if (!card || !canSubmit || !date) return
 
-    onRecord({
+    const nextPayment = {
       creditCardId: card.id,
       amount: parsedAmount,
       paidOn: format(date, "yyyy-MM-dd"),
       sourceAccountId: sourceAccountId === "CASH" ? null : sourceAccountId,
       notes: notes.trim(),
-    })
+    }
+    if (payment && onUpdate) onUpdate(payment.id, nextPayment)
+    else onRecord(nextPayment)
     onOpenChange(false)
   }
 
@@ -82,10 +94,11 @@ export function RecordPaymentDrawer({
         {card && (
           <form onSubmit={handleSubmit} className="flex h-full flex-col">
             <DrawerHeader>
-              <DrawerTitle>Record payment</DrawerTitle>
+              <DrawerTitle>{payment ? "Edit payment" : "Record payment"}</DrawerTitle>
               <DrawerDescription>
-                Log a payment made toward {card.name}. The card&apos;s outstanding
-                balance and utilization will update automatically.
+                {payment ? "Update" : "Log"} a payment made toward {card.name}.
+                The card&apos;s outstanding balance and utilization will update
+                automatically.
               </DrawerDescription>
             </DrawerHeader>
             <div className="flex flex-col gap-4 overflow-y-auto p-4">
@@ -169,7 +182,7 @@ export function RecordPaymentDrawer({
             </div>
             <DrawerFooter>
               <Button type="submit" disabled={!canSubmit}>
-                Record payment
+                {payment ? "Save changes" : "Record payment"}
               </Button>
               <DrawerClose render={<Button variant="outline" type="button" />}>
                 Cancel

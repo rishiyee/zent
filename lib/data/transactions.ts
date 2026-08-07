@@ -30,6 +30,8 @@ function toTransaction(row: TransactionRow): Transaction {
     notes: row.notes ?? undefined,
     goalId: row.goal_id,
     tagIds: (row.transaction_tags ?? []).map((t) => t.tag_id),
+    linkedPaymentId:
+      row.category === "Credit card payment" ? "credit-card-payment" : null,
   }
 }
 

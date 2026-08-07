@@ -163,7 +163,11 @@ export function LedgerTable({
                     </div>
                   </TableCell>
                   <TableCell>
-                    {txn.category ? (
+                    {txn.linkedPaymentId ? (
+                      <Badge variant="outline" className="font-normal">
+                        Transfer
+                      </Badge>
+                    ) : txn.category ? (
                       <Badge variant="secondary" className="font-normal">
                         {txn.category}
                       </Badge>
@@ -186,7 +190,7 @@ export function LedgerTable({
                         : "text-foreground"
                     }`}
                   >
-                    {txn.type === "income" ? "+" : "-"}
+                    {txn.linkedPaymentId ? "" : txn.type === "income" ? "+" : "-"}
                     {format(txn.amount)}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
@@ -201,24 +205,24 @@ export function LedgerTable({
                         <DropdownMenuItem onClick={() => onRowClick(txn)}>
                           View details
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onEdit(txn)}>
+                        {!txn.linkedPaymentId && <DropdownMenuItem onClick={() => onEdit(txn)}>
                           Edit transaction
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onSplit(txn)}>
+                        </DropdownMenuItem>}
+                        {!txn.linkedPaymentId && <DropdownMenuItem onClick={() => onSplit(txn)}>
                           Split transaction
-                        </DropdownMenuItem>
-                        {txn.status !== "reviewed" && (
+                        </DropdownMenuItem>}
+                        {!txn.linkedPaymentId && txn.status !== "reviewed" && (
                           <DropdownMenuItem onClick={() => onMarkReviewed(txn.id)}>
                             Mark as reviewed
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
+                        {!txn.linkedPaymentId && <DropdownMenuSeparator />}
+                        {!txn.linkedPaymentId && <DropdownMenuItem
                           variant="destructive"
                           onClick={() => onDelete(txn.id)}
                         >
                           Delete
-                        </DropdownMenuItem>
+                        </DropdownMenuItem>}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

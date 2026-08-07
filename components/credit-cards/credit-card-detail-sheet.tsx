@@ -66,6 +66,8 @@ export function CreditCardDetailSheet({
   onEdit,
   onDelete,
   onRecordPayment,
+  onEditPayment,
+  onDeletePayment,
 }: {
   card: CreditCard | null
   payments: CreditCardPayment[]
@@ -74,6 +76,8 @@ export function CreditCardDetailSheet({
   onEdit: (card: CreditCard) => void
   onDelete: (id: string) => void
   onRecordPayment: (card: CreditCard) => void
+  onEditPayment: (payment: CreditCardPayment) => void
+  onDeletePayment: (id: string) => void
 }) {
   const { format } = useCurrency()
   const today = new Date()
@@ -153,9 +157,54 @@ export function CreditCardDetailSheet({
                           </span>
                         )}
                       </div>
-                      <span className="font-medium tabular-nums text-emerald-600 dark:text-emerald-400">
-                        {format(payment.amount)}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="font-medium tabular-nums text-emerald-600 dark:text-emerald-400">
+                          {format(payment.amount)}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          type="button"
+                          aria-label="Edit payment"
+                          onClick={() => onEditPayment(payment)}
+                        >
+                          <Pencil />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                type="button"
+                                aria-label="Delete payment"
+                                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              />
+                            }
+                          >
+                            <Trash2 />
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete this payment?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This removes the {format(payment.amount)} payment
+                                and its linked ledger transaction, and restores
+                                the card balance. This can&apos;t be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                variant="destructive"
+                                onClick={() => onDeletePayment(payment.id)}
+                              >
+                                Delete payment
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
                   ))
                 ) : (

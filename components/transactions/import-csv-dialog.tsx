@@ -1,11 +1,13 @@
 "use client"
 
 import * as React from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import { Paperclip, Upload } from "lucide-react"
 
 import { importTransactions } from "@/app/(dashboard)/transactions/actions"
 import { CategoryGroup, flattenCategoryNames } from "@/lib/categories"
 import { ParsedTransactionRow, parseTransactionsCsv } from "@/lib/csv"
+import { queryKeys } from "@/lib/query-keys"
 import {
   TransactionAccountOption,
   transactionAccountOptions,
@@ -51,6 +53,7 @@ export function ImportCsvDialog({
   categoryGroups: CategoryGroup[]
 }) {
   const { format } = useCurrency()
+  const queryClient = useQueryClient()
   const [open, setOpen] = React.useState(false)
   const [fileName, setFileName] = React.useState<string | null>(null)
   const [rows, setRows] = React.useState<ParsedTransactionRow[]>([])
@@ -86,6 +89,7 @@ export function ImportCsvDialog({
     setImporting(true)
     try {
       const count = await importTransactions(rows, accountId, adjustBalance)
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions })
       toast.add({
         title: `Imported ${count} transaction${count === 1 ? "" : "s"}`,
         type: "success",

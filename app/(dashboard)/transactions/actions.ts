@@ -3,9 +3,13 @@
 import { revalidatePath } from "next/cache"
 
 import { balanceDelta } from "@/lib/accounts"
-import { toDbAccountId } from "@/lib/data/transactions"
+import { getTransactions, toDbAccountId } from "@/lib/data/transactions"
 import { createClient } from "@/lib/supabase/server"
 import { Transaction, TransactionStatus, TransactionType } from "@/lib/transactions"
+
+export async function getTransactionsData() {
+  return getTransactions()
+}
 
 function revalidateTransactions() {
   revalidatePath("/transactions")

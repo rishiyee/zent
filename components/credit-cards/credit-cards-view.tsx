@@ -1,13 +1,17 @@
 "use client"
 
 import * as React from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { CreditCard as CreditCardIcon, Plus } from "lucide-react"
 
 import {
   addCreditCard,
   addPayment,
   deleteCreditCard,
+  deletePayment,
+  getCreditCardsData,
   updateCreditCard,
+  updatePayment,
 } from "@/app/(dashboard)/credit-cards/actions"
 import {
   CreditCard,
@@ -19,6 +23,7 @@ import {
   nextDueDate,
   utilization,
 } from "@/lib/credit-cards"
+import { queryKeys } from "@/lib/query-keys"
 import { TransactionAccountOption } from "@/lib/transactions"
 import { cn } from "@/lib/utils"
 import { useCurrency } from "@/components/currency-provider"
@@ -64,8 +69,8 @@ function UtilizationBar({ value }: { value: number }) {
 }
 
 export function CreditCardsView({
-  cards,
-  payments,
+  cards: initialCards,
+  payments: initialPayments,
   accounts,
 }: {
   cards: CreditCard[]
@@ -73,38 +78,66 @@ export function CreditCardsView({
   accounts: TransactionAccountOption[]
 }) {
   const { format } = useCurrency()
+  const queryClient = useQueryClient()
+  const { data } = useQuery({
+    queryKey: queryKeys.creditCards,
+    queryFn: getCreditCardsData,
+    initialData: { cards: initialCards, payments: initialPayments },
+  })
+  const { cards, payments } = data
   const [detailId, setDetailId] = React.useState<string | null>(null)
   const [editId, setEditId] = React.useState<string | null>(null)
   const [paymentCardId, setPaymentCardId] = React.useState<string | null>(null)
+  const [editPaymentId, setEditPaymentId] = React.useState<string | null>(null)
 
   const today = React.useMemo(() => new Date(), [])
 
   const detailCard = cards.find((c) => c.id === detailId) ?? null
   const editCard = cards.find((c) => c.id === editId) ?? null
   const paymentCard = cards.find((c) => c.id === paymentCardId) ?? null
+  const editPayment = payments.find((p) => p.id === editPaymentId) ?? null
+  const editPaymentCard = cards.find((c) => c.id === editPayment?.creditCardId) ?? null
 
   const totalBalance = cards.reduce((sum, c) => sum + c.balance, 0)
   const totalLimit = cards.reduce((sum, c) => sum + c.creditLimit, 0)
   const blendedUtilization = totalLimit > 0 ? totalBalance / totalLimit : 0
 
+  function invalidate() {
+    queryClient.invalidateQueries({ queryKey: queryKeys.creditCards })
+    queryClient.invalidateQueries({ queryKey: queryKeys.transactions })
+  }
+
   function addCard(card: Omit<CreditCard, "id" | "accountId">) {
-    void notify(addCreditCard(card), "Credit card added")
+    void notify(addCreditCard(card), "Credit card added").then(invalidate)
   }
 
   function saveCard(id: string, patch: Omit<CreditCard, "id" | "accountId">) {
     const card = cards.find((c) => c.id === id)
     if (!card) return
-    void notify(updateCreditCard(id, card.accountId, patch), "Credit card updated")
+    void notify(updateCreditCard(id, card.accountId, patch), "Credit card updated").then(
+      invalidate
+    )
   }
 
   function deleteCard(id: string) {
     const card = cards.find((c) => c.id === id)
     if (!card) return
-    void notify(deleteCreditCard(card.accountId), "Credit card deleted")
+    void notify(deleteCreditCard(card.accountId), "Credit card deleted").then(invalidate)
   }
 
   function recordPayment(payment: Omit<CreditCardPayment, "id">) {
-    void notify(addPayment(payment), "Payment recorded")
+    void notify(addPayment(payment), "Payment recorded").then(invalidate)
+  }
+
+  function savePayment(
+    id: string,
+    payment: Omit<CreditCardPayment, "id">
+  ) {
+    void notify(updatePayment(id, payment), "Payment updated").then(invalidate)
+  }
+
+  function removePayment(id: string) {
+    void notify(deletePayment(id), "Payment deleted").then(invalidate)
   }
 
   function openEdit(card: CreditCard) {
@@ -113,7 +146,13 @@ export function CreditCardsView({
   }
 
   function openRecordPayment(card: CreditCard) {
+    setEditPaymentId(null)
     setPaymentCardId(card.id)
+  }
+
+  function openEditPayment(payment: CreditCardPayment) {
+    setEditPaymentId(payment.id)
+    setPaymentCardId(null)
   }
 
   return (
@@ -229,6 +268,8 @@ export function CreditCardsView({
         onEdit={openEdit}
         onDelete={deleteCard}
         onRecordPayment={openRecordPayment}
+        onEditPayment={openEditPayment}
+        onDeletePayment={removePayment}
       />
       <EditCreditCardDrawer
         card={editCard}
@@ -242,6 +283,15 @@ export function CreditCardsView({
         onOpenChange={(open) => !open && setPaymentCardId(null)}
         accounts={accounts}
         onRecord={recordPayment}
+      />
+      <RecordPaymentDrawer
+        card={editPaymentCard}
+        payment={editPayment}
+        open={!!editPaymentId}
+        onOpenChange={(open) => !open && setEditPaymentId(null)}
+        accounts={accounts}
+        onRecord={recordPayment}
+        onUpdate={savePayment}
       />
     </div>
   )

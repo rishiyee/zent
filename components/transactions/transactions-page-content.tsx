@@ -1,16 +1,19 @@
 "use client"
 
 import * as React from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { endOfDay, startOfDay } from "date-fns"
 
 import {
   addTransaction,
   bulkUpdateTransactions,
   deleteTransaction,
+  getTransactionsData,
   splitTransaction,
   updateTransaction,
 } from "@/app/(dashboard)/transactions/actions"
 import { Goal } from "@/lib/goals"
+import { queryKeys } from "@/lib/query-keys"
 import { Tag } from "@/lib/tags"
 import { CategoryGroup } from "@/lib/categories"
 import {
@@ -64,7 +67,7 @@ function matchesFilters(txn: Transaction, filters: LedgerFilters) {
 }
 
 export function TransactionsPageContent({
-  transactions,
+  transactions: initialTransactions,
   rules,
   accounts,
   goals,
@@ -80,6 +83,12 @@ export function TransactionsPageContent({
   categoryGroups: CategoryGroup[]
   merchants: string[]
 }) {
+  const queryClient = useQueryClient()
+  const { data: transactions } = useQuery({
+    queryKey: queryKeys.transactions,
+    queryFn: getTransactionsData,
+    initialData: initialTransactions,
+  })
   const [filters, setFilters] = React.useState<LedgerFilters>(emptyLedgerFilters)
   const [sort, setSort] = React.useState<LedgerSort>("date-desc")
   const [selected, setSelected] = React.useState<Record<string, boolean>>({})
@@ -103,6 +112,11 @@ export function TransactionsPageContent({
     setEditId(transaction.id)
   }
 
+  function invalidate() {
+    queryClient.invalidateQueries({ queryKey: queryKeys.transactions })
+    queryClient.invalidateQueries({ queryKey: queryKeys.creditCards })
+  }
+
   function handleDelete(id: string) {
     setSelected((prev) => {
       if (!(id in prev)) return prev
@@ -112,22 +126,22 @@ export function TransactionsPageContent({
     })
     if (detailId === id) setDetailId(null)
     if (editId === id) setEditId(null)
-    void notify(deleteTransaction(id), "Transaction deleted")
+    void notify(deleteTransaction(id), "Transaction deleted").then(invalidate)
   }
 
   function handleSaveEdit(id: string, patch: Partial<Transaction>) {
-    void notify(updateTransaction(id, patch), "Transaction updated")
+    void notify(updateTransaction(id, patch), "Transaction updated").then(invalidate)
   }
 
   function handleMarkReviewed(id: string) {
-    void notify(updateTransaction(id, { status: "reviewed" }))
+    void notify(updateTransaction(id, { status: "reviewed" })).then(invalidate)
   }
 
   function handleSplit(original: Transaction, splits: Parameters<typeof splitTransaction>[1]) {
     setSplitId(null)
     if (detailId === original.id) setDetailId(null)
     if (editId === original.id) setEditId(null)
-    void notify(splitTransaction(original.id, splits), "Transaction split")
+    void notify(splitTransaction(original.id, splits), "Transaction split").then(invalidate)
   }
 
   function handleBulkApply(patch: BulkEditPatch) {
@@ -136,7 +150,7 @@ export function TransactionsPageContent({
     void notify(
       bulkUpdateTransactions(ids, patch),
       `Updated ${ids.length} transaction${ids.length === 1 ? "" : "s"}`
-    )
+    ).then(invalidate)
   }
 
   return (
@@ -159,7 +173,9 @@ export function TransactionsPageContent({
           rules={rules}
           categoryGroups={categoryGroups}
           merchants={merchants}
-          onAdd={(txn) => void notify(addTransaction(txn), "Transaction added")}
+          onAdd={(txn) =>
+            void notify(addTransaction(txn), "Transaction added").then(invalidate)
+          }
           accounts={accounts}
           selectedCount={selectedCount}
           onBulkEdit={() => setBulkEditOpen(true)}
