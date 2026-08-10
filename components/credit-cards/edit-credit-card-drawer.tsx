@@ -102,6 +102,7 @@ export function EditCreditCardDrawer({
             <div className="flex flex-col gap-4 overflow-y-auto p-4">
               <CreditCardFormFields
                 value={form}
+                balanceReadOnly
                 onChange={(patch) =>
                   setForm((f) => (f ? { ...f, ...patch } : f))
                 }

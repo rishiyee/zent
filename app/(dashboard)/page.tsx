@@ -62,7 +62,7 @@ export default async function DashboardPage() {
             Here&apos;s what&apos;s happening with your money today.
           </p>
         </div>
-        <SummaryCards transactions={transactions} />
+        <SummaryCards transactions={transactions} accounts={accounts} />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <CreditCardsDueSoonCard cards={creditCards} payments={creditCardPayments} />
         </div>

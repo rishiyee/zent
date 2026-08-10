@@ -13,6 +13,7 @@ import {
   updateCreditCard,
   updatePayment,
 } from "@/app/(dashboard)/credit-cards/actions"
+import { getTransactionsData } from "@/app/(dashboard)/transactions/actions"
 import {
   CreditCard,
   CreditCardPayment,
@@ -24,7 +25,7 @@ import {
   utilization,
 } from "@/lib/credit-cards"
 import { queryKeys } from "@/lib/query-keys"
-import { TransactionAccountOption } from "@/lib/transactions"
+import { Transaction, TransactionAccountOption } from "@/lib/transactions"
 import { cn } from "@/lib/utils"
 import { useCurrency } from "@/components/currency-provider"
 import { Badge } from "@/components/ui/badge"
@@ -71,10 +72,12 @@ function UtilizationBar({ value }: { value: number }) {
 export function CreditCardsView({
   cards: initialCards,
   payments: initialPayments,
+  transactions: initialTransactions,
   accounts,
 }: {
   cards: CreditCard[]
   payments: CreditCardPayment[]
+  transactions: Transaction[]
   accounts: TransactionAccountOption[]
 }) {
   const { format } = useCurrency()
@@ -84,7 +87,33 @@ export function CreditCardsView({
     queryFn: getCreditCardsData,
     initialData: { cards: initialCards, payments: initialPayments },
   })
-  const { cards, payments } = data
+  const { cards: storedCards, payments } = data
+  const { data: transactions } = useQuery({
+    queryKey: queryKeys.transactions,
+    queryFn: getTransactionsData,
+    initialData: initialTransactions,
+  })
+  const cards = React.useMemo(
+    () =>
+      storedCards.map((card) => {
+        const ledgerBalance = transactions
+          .filter((transaction) => transaction.accountId === card.accountId)
+          .reduce(
+            (balance, transaction) =>
+              balance +
+              (transaction.type === "expense"
+                ? transaction.amount
+                : -transaction.amount),
+            0
+          )
+        const paid = payments
+          .filter((payment) => payment.creditCardId === card.id)
+          .reduce((total, payment) => total + payment.amount, 0)
+
+        return { ...card, balance: Math.max(0, ledgerBalance - paid) }
+      }),
+    [storedCards, transactions, payments]
+  )
   const [detailId, setDetailId] = React.useState<string | null>(null)
   const [editId, setEditId] = React.useState<string | null>(null)
   const [paymentCardId, setPaymentCardId] = React.useState<string | null>(null)
@@ -161,7 +190,7 @@ export function CreditCardsView({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardDescription>Total balance</CardDescription>
+            <CardDescription>Total outstanding balance</CardDescription>
             <CardTitle className="text-2xl font-semibold tabular-nums">
               {format(totalBalance)}
             </CardTitle>
@@ -264,6 +293,7 @@ export function CreditCardsView({
       <CreditCardDetailSheet
         card={detailCard}
         payments={payments}
+        transactions={transactions}
         open={!!detailId}
         onOpenChange={(open) => !open && setDetailId(null)}
         onEdit={openEdit}

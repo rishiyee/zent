@@ -10,12 +10,14 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { CreditCardsView } from "@/components/credit-cards/credit-cards-view";
 import { getAccounts } from "@/lib/data/accounts";
 import { getCreditCardPayments, getCreditCards } from "@/lib/data/credit-cards";
+import { getTransactions } from "@/lib/data/transactions";
 
 export default async function CreditCardsPage() {
-  const [accounts, cards, payments] = await Promise.all([
+  const [accounts, cards, payments, transactions] = await Promise.all([
     getAccounts(),
     getCreditCards(),
     getCreditCardPayments(),
+    getTransactions(),
   ]);
 
   return (
@@ -46,6 +48,7 @@ export default async function CreditCardsPage() {
         <CreditCardsView
           cards={cards}
           payments={payments}
+          transactions={transactions}
           accounts={accounts.map((a) => ({ id: a.id, name: a.name }))}
         />
       </div>

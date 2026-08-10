@@ -90,6 +90,14 @@ export function balanceDelta(
   return categoryMeta[category].kind === "liability" ? -signed : signed
 }
 
+export function liabilityAccountIds(accounts: Account[]): Set<string> {
+  return new Set(
+    accounts
+      .filter((a) => categoryMeta[a.category].kind === "liability")
+      .map((a) => a.id)
+  )
+}
+
 export function netWorthSummary(data: Account[]) {
   const assetAccounts = data.filter(
     (a) => categoryMeta[a.category].kind === "asset"

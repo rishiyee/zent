@@ -78,6 +78,23 @@ export async function addCreditCard(
     throw cardError
   }
 
+  if (card.balance > 0) {
+    const { error: openingBalanceError } = await supabase.from("transactions").insert({
+      date: new Date().toISOString().slice(0, 10),
+      description: `Opening balance for ${card.name}`,
+      category: "Opening balance",
+      account_id: account.id,
+      type: "expense",
+      amount: card.balance,
+      status: "reviewed",
+      source: "manual",
+    })
+    if (openingBalanceError) {
+      await supabase.from("accounts").delete().eq("id", account.id)
+      throw openingBalanceError
+    }
+  }
+
   revalidateCreditCards()
 }
 
@@ -92,8 +109,6 @@ export async function updateCreditCard(
     .from("accounts")
     .update({
       name: patch.name,
-      balance: patch.balance,
-      last_updated: new Date().toISOString().slice(0, 10),
     })
     .eq("id", accountId)
   if (accountError) throw accountError

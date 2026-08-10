@@ -1,6 +1,4 @@
 import { ProfileForm } from "@/components/settings/profile-form"
-import { SettingsModal } from "@/components/settings/settings-modal"
-import { SettingsNav } from "@/components/settings/settings-nav"
 import { createClient } from "@/lib/supabase/server"
 
 export default async function SettingsModalPage() {
@@ -19,17 +17,12 @@ export default async function SettingsModalPage() {
   }
 
   return (
-    <SettingsModal>
-      <div className="flex flex-col gap-6 lg:flex-row">
-        <SettingsNav />
-        <ProfileForm
-          userId={user.id}
-          fullName={metadata.full_name ?? user.email?.split("@")[0] ?? ""}
-          birthday={metadata.birthday ?? null}
-          timezone={metadata.timezone ?? null}
-          avatarUrl={metadata.avatar_url ?? null}
-        />
-      </div>
-    </SettingsModal>
+    <ProfileForm
+      userId={user.id}
+      fullName={metadata.full_name ?? user.email?.split("@")[0] ?? ""}
+      birthday={metadata.birthday ?? null}
+      timezone={metadata.timezone ?? null}
+      avatarUrl={metadata.avatar_url ?? null}
+    />
   )
 }

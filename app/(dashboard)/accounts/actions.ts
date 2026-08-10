@@ -27,16 +27,13 @@ export async function addAccount(account: Omit<Account, "id">) {
 
 export async function updateAccount(
   id: string,
-  patch: Partial<Omit<Account, "id">>
+  patch: Pick<Account, "name" | "category">
 ) {
   const supabase = await createClient()
 
   const dbPatch: Record<string, unknown> = {}
   if (patch.name !== undefined) dbPatch.name = patch.name
   if (patch.category !== undefined) dbPatch.category = patch.category
-  if (patch.source !== undefined) dbPatch.source = patch.source
-  if (patch.balance !== undefined) dbPatch.balance = patch.balance
-  if (patch.lastUpdated !== undefined) dbPatch.last_updated = patch.lastUpdated
 
   if (Object.keys(dbPatch).length) {
     const { error } = await supabase.from("accounts").update(dbPatch).eq("id", id)

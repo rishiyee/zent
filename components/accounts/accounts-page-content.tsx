@@ -28,6 +28,9 @@ export function AccountsPageContent({
     queryFn: getAccountsData,
     initialData: initialAccounts,
   })
+  const visibleAccounts = accounts.filter(
+    (account) => account.category !== "credit-card"
+  )
   const [detailId, setDetailId] = React.useState<string | null>(null)
   const [editId, setEditId] = React.useState<string | null>(null)
 
@@ -55,7 +58,7 @@ export function AccountsPageContent({
     <>
       <NetWorthSummary accounts={accounts} />
       <AccountsView
-        data={accounts}
+        data={visibleAccounts}
         onAdd={(account) =>
           void notify(addAccount(account), "Account added").then(invalidate)
         }

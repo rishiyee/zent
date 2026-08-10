@@ -1,6 +1,8 @@
 "use client"
 
-import { CreditCardIcon, Pencil, Plus, Trash2 } from "lucide-react"
+import * as React from "react"
+import Link from "next/link"
+import { ChevronDown, CreditCardIcon, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react"
 
 import {
   CreditCard,
@@ -13,6 +15,7 @@ import {
   nextDueDate,
   utilization,
 } from "@/lib/credit-cards"
+import { Transaction } from "@/lib/transactions"
 import { useCurrency } from "@/components/currency-provider"
 import {
   AlertDialog,
@@ -43,6 +46,11 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 })
 
+const monthFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  year: "numeric",
+})
+
 function DetailRow({
   label,
   children,
@@ -58,9 +66,84 @@ function DetailRow({
   )
 }
 
+function MonthlyTransactionsAccordion({
+  month,
+  items,
+  total,
+  format,
+}: {
+  month: string
+  items: Transaction[]
+  total: number
+  format: (amount: number) => string
+}) {
+  const [open, setOpen] = React.useState(false)
+
+  return (
+    <div className="rounded-md border">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left text-sm"
+      >
+        <div className="flex items-center gap-2">
+          <ChevronDown
+            className={`size-4 transition-transform duration-300 ease-out ${
+              open ? "rotate-180" : ""
+            }`}
+          />
+          <span className="font-medium">
+            {monthFormatter.format(new Date(`${month}-01T00:00:00`))}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {items.length} transaction{items.length === 1 ? "" : "s"}
+          </span>
+        </div>
+        <span className="font-medium tabular-nums">{format(total)}</span>
+      </button>
+      <div
+        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="border-t px-3">
+            {items.map((txn) => (
+              <div
+                key={txn.id}
+                className="flex items-center justify-between gap-2 border-b py-2 text-sm last:border-b-0"
+              >
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate font-medium">{txn.description}</span>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span>
+                      {dateFormatter.format(new Date(`${txn.date}T00:00:00`))}
+                    </span>
+                    {txn.category && (
+                      <Badge variant="secondary" className="h-4 px-1.5 font-normal">
+                        {txn.category}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <span className="shrink-0 font-medium tabular-nums">
+                  {txn.type === "income" ? "+" : "-"}
+                  {format(txn.amount)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function CreditCardDetailSheet({
   card,
   payments,
+  transactions,
   open,
   onOpenChange,
   onEdit,
@@ -71,6 +154,7 @@ export function CreditCardDetailSheet({
 }: {
   card: CreditCard | null
   payments: CreditCardPayment[]
+  transactions: Transaction[]
   open: boolean
   onOpenChange: (open: boolean) => void
   onEdit: (card: CreditCard) => void
@@ -87,6 +171,30 @@ export function CreditCardDetailSheet({
         .filter((p) => p.creditCardId === card.id)
         .sort((a, b) => (a.paidOn < b.paidOn ? 1 : -1))
     : []
+
+  const cardTransactions = card
+    ? transactions
+        .filter((t) => t.accountId === card.accountId)
+        .sort((a, b) => (a.date < b.date ? 1 : -1))
+    : []
+
+  const monthlyTransactions = Array.from(
+    cardTransactions.reduce((groups, transaction) => {
+      const month = transaction.date.slice(0, 7)
+      const existing = groups.get(month)
+      if (existing) existing.push(transaction)
+      else groups.set(month, [transaction])
+      return groups
+    }, new Map<string, Transaction[]>())
+  ).map(([month, items]) => ({
+    month,
+    items,
+    total: items.reduce(
+      (sum, transaction) =>
+        sum + (transaction.type === "income" ? -transaction.amount : transaction.amount),
+      0
+    ),
+  }))
 
   const settled = card ? isCycleSettled(card, payments, today) : false
   const daysUntil = card ? daysUntilDue(card, today) : 0
@@ -126,6 +234,37 @@ export function CreditCardDetailSheet({
               <DetailRow label="Autopay">
                 {card.autopay ? "On" : "Off"}
               </DetailRow>
+
+              <Separator className="my-3" />
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-sm font-medium">Transactions</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  nativeButton={false}
+                  render={<Link href="/transactions" />}
+                >
+                  View all
+                </Button>
+              </div>
+              <div className="flex max-h-72 flex-col gap-1 overflow-y-auto">
+                {monthlyTransactions.length ? (
+                  monthlyTransactions.map((group) => (
+                    <MonthlyTransactionsAccordion
+                      key={group.month}
+                      month={group.month}
+                      items={group.items}
+                      total={group.total}
+                      format={format}
+                    />
+                  ))
+                ) : (
+                  <p className="py-4 text-center text-sm text-muted-foreground">
+                    <ReceiptText className="mx-auto mb-1.5 size-5 text-muted-foreground/50" />
+                    No transactions on this card yet.
+                  </p>
+                )}
+              </div>
 
               <Separator className="my-3" />
               <div className="mb-2 flex items-center justify-between">

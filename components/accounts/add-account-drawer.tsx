@@ -12,6 +12,10 @@ import {
   categoryMeta,
   valuableCategories,
 } from "@/lib/accounts"
+
+const accountCashCategories = cashCreditCategories.filter(
+  (category) => category !== "credit-card"
+)
 import { Button } from "@/components/ui/button"
 import {
   Drawer,
@@ -132,7 +136,7 @@ export function AddAccountDrawer({
                   <Label>Category</Label>
                   <Select
                     items={Object.fromEntries(
-                      [...cashCreditCategories, ...valuableCategories].map((category) => [
+                      [...accountCashCategories, ...valuableCategories].map((category) => [
                         category,
                         categoryMeta[category].label,
                       ])
@@ -148,7 +152,7 @@ export function AddAccountDrawer({
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Cash & Credit</SelectLabel>
-                        {cashCreditCategories.map((category) => (
+                        {accountCashCategories.map((category) => (
                           <SelectItem key={category} value={category}>
                             {categoryMeta[category].label}
                           </SelectItem>

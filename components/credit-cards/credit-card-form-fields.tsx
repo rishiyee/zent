@@ -53,9 +53,11 @@ const dayItems = Object.fromEntries(
 export function CreditCardFormFields({
   value,
   onChange,
+  balanceReadOnly = false,
 }: {
   value: CreditCardFormValue
   onChange: (patch: Partial<CreditCardFormValue>) => void
+  balanceReadOnly?: boolean
 }) {
   const { format } = useCurrency()
 
@@ -92,8 +94,14 @@ export function CreditCardFormFields({
             placeholder="0.00"
             value={value.balance}
             onChange={(e) => onChange({ balance: e.target.value })}
+            disabled={balanceReadOnly}
             required
           />
+          {balanceReadOnly && (
+            <p className="text-xs text-muted-foreground">
+              Managed by card transactions and payments.
+            </p>
+          )}
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="cc-limit">Credit limit</Label>

@@ -12,16 +12,12 @@ import {
   splitTransaction,
   updateTransaction,
 } from "@/app/(dashboard)/transactions/actions"
+import { Account } from "@/lib/accounts"
 import { Goal } from "@/lib/goals"
 import { queryKeys } from "@/lib/query-keys"
 import { Tag } from "@/lib/tags"
 import { CategoryGroup } from "@/lib/categories"
-import {
-  CategoryRule,
-  Transaction,
-  TransactionAccountOption,
-  UNCATEGORIZED,
-} from "@/lib/transactions"
+import { CategoryRule, Transaction, UNCATEGORIZED } from "@/lib/transactions"
 import { notify } from "@/components/ui/toast"
 import { SummaryCards } from "@/components/transactions/summary-cards"
 import { BulkEditDrawer, BulkEditPatch } from "@/components/transactions/bulk-edit-drawer"
@@ -68,6 +64,7 @@ function matchesFilters(txn: Transaction, filters: LedgerFilters) {
 
 export function TransactionsPageContent({
   transactions: initialTransactions,
+  initialDetailId,
   rules,
   accounts,
   goals,
@@ -76,8 +73,9 @@ export function TransactionsPageContent({
   merchants,
 }: {
   transactions: Transaction[]
+  initialDetailId?: string
   rules: CategoryRule[]
-  accounts: TransactionAccountOption[]
+  accounts: Account[]
   goals: Goal[]
   tags: Tag[]
   categoryGroups: CategoryGroup[]
@@ -93,7 +91,12 @@ export function TransactionsPageContent({
   const [sort, setSort] = React.useState<LedgerSort>("date-desc")
   const [selected, setSelected] = React.useState<Record<string, boolean>>({})
   const [bulkEditOpen, setBulkEditOpen] = React.useState(false)
-  const [detailId, setDetailId] = React.useState<string | null>(null)
+  const [detailId, setDetailId] = React.useState<string | null>(() =>
+    initialDetailId &&
+    initialTransactions.some((txn) => txn.id === initialDetailId)
+      ? initialDetailId
+      : null
+  )
   const [editId, setEditId] = React.useState<string | null>(null)
   const [splitId, setSplitId] = React.useState<string | null>(null)
 
@@ -156,7 +159,7 @@ export function TransactionsPageContent({
 
   return (
     <>
-      <SummaryCards transactions={filtered} />
+      <SummaryCards transactions={filtered} accounts={accounts} />
       <div>
         <div className="mb-3 flex items-start justify-between gap-4">
           <div>

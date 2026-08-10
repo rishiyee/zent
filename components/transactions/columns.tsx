@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowDown, ArrowUp, ArrowUpDown, MoreHorizontal } from "lucide-react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 import { Transaction, TransactionAccountOption, accountName } from "@/lib/transactions"
 import { Badge } from "@/components/ui/badge"
@@ -12,7 +12,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { TransactionStatusBadge } from "@/components/transactions/transaction-status-badge"
@@ -49,6 +48,26 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   year: "numeric",
 })
+
+function TransactionActions() {
+  const router = useRouter()
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={<Button variant="ghost" size="icon-sm" className="ml-2" />}
+      >
+        <MoreHorizontal />
+        <span className="sr-only">Open menu</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => router.push("/transactions")}>
+          Open in transactions
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 export function getColumns(
   accounts: TransactionAccountOption[],
@@ -92,12 +111,7 @@ export function getColumns(
       <SortableHeader column={column}>Description</SortableHeader>
     ),
     cell: ({ row }) => (
-      <div className="flex flex-col">
-        <span className="font-medium">{row.getValue("description")}</span>
-        <span className="text-xs text-muted-foreground">
-          {row.original.id}
-        </span>
-      </div>
+      <span className="font-medium">{row.getValue("description")}</span>
     ),
   },
   {
@@ -169,24 +183,7 @@ export function getColumns(
   {
     id: "actions",
     enableHiding: false,
-    cell: ({ row }) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={<Button variant="ghost" size="icon-sm" className="ml-2" />}
-        >
-          <MoreHorizontal />
-          <span className="sr-only">Open menu</span>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Transaction</DropdownMenuLabel>
-          <DropdownMenuItem
-            render={<Link href={`/transactions?transaction=${row.original.id}`} />}
-          >
-            Open in transactions
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
+    cell: () => <TransactionActions />,
   },
   ]
 }

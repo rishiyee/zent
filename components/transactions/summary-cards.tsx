@@ -1,7 +1,9 @@
 "use client"
 
+import * as React from "react"
 import { TrendingDownIcon, TrendingUpIcon } from "lucide-react"
 
+import { Account, netWorthSummary } from "@/lib/accounts"
 import { Transaction } from "@/lib/transactions"
 import { useCurrency } from "@/components/currency-provider"
 import { Badge } from "@/components/ui/badge"
@@ -14,7 +16,58 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-export function SummaryCards({ transactions }: { transactions: Transaction[] }) {
+function AnimatedValue({
+  value,
+  format,
+}: {
+  value: number
+  format: (value: number) => string
+}) {
+  const [displayedValue, setDisplayedValue] = React.useState(value)
+  const displayedValueRef = React.useRef(value)
+  const isFirstRender = React.useRef(true)
+
+  React.useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      displayedValueRef.current = value
+      const frame = window.requestAnimationFrame(() => setDisplayedValue(value))
+      return () => window.cancelAnimationFrame(frame)
+    }
+
+    const startValue = displayedValueRef.current
+    const startTime = performance.now()
+    const duration = 450
+    let frame = 0
+
+    const tick = (time: number) => {
+      const progress = Math.min((time - startTime) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      const nextValue = startValue + (value - startValue) * eased
+      displayedValueRef.current = nextValue
+      setDisplayedValue(nextValue)
+
+      if (progress < 1) frame = window.requestAnimationFrame(tick)
+    }
+
+    frame = window.requestAnimationFrame(tick)
+    return () => window.cancelAnimationFrame(frame)
+  }, [value])
+
+  return <span aria-live="polite">{format(displayedValue)}</span>
+}
+
+export function SummaryCards({
+  transactions,
+  accounts = [],
+}: {
+  transactions: Transaction[]
+  accounts?: Account[]
+}) {
   const { format } = useCurrency()
   const income = transactions
     .filter((t) => t.type === "income" && !t.linkedPaymentId)
@@ -22,7 +75,18 @@ export function SummaryCards({ transactions }: { transactions: Transaction[] }) 
   const expenses = transactions
     .filter((t) => t.type === "expense" && !t.linkedPaymentId)
     .reduce((sum, t) => sum + t.amount, 0)
-  const balance = income - expenses
+
+  // Cash balance only counts transactions against asset accounts (checking,
+  // savings, investment, untracked cash) — a credit card purchase doesn't move
+  // cash until the bill is paid, so it's excluded here even though it counts as
+  // spending above. The later "Credit card payment" transaction (an asset-account
+  // expense) is what actually reduces cash, so it's included here even though the
+  // Expenses total above skips it to avoid double-counting the original purchase.
+  const accountSummary = netWorthSummary(accounts)
+  const hasAccountBalances = accounts.length > 0
+  const headlineValue = hasAccountBalances
+    ? accountSummary.netWorth
+    : income - expenses
   const needsReview = transactions.filter(
     (t) => t.status === "needs-review"
   ).length
@@ -30,16 +94,20 @@ export function SummaryCards({ transactions }: { transactions: Transaction[] }) 
 
   const cards = [
     {
-      label: "Total Balance",
-      value: format(balance),
+      label: hasAccountBalances ? "Net Worth" : "Net Cash Flow",
+      value: headlineValue,
+      format,
       trend: "+4.3%",
       up: true,
       footerTitle: "Trending up this month",
-      footerSubtitle: "Balance across all accounts",
+      footerSubtitle: hasAccountBalances
+        ? "Assets minus credit cards and other liabilities"
+        : "Income minus expenses",
     },
     {
       label: "Income",
-      value: format(income),
+      value: income,
+      format,
       trend: "+12.1%",
       up: true,
       footerTitle: "Strong income this month",
@@ -47,7 +115,8 @@ export function SummaryCards({ transactions }: { transactions: Transaction[] }) 
     },
     {
       label: "Expenses",
-      value: format(expenses),
+      value: expenses,
+      format,
       trend: "-2.6%",
       up: false,
       footerTitle: "Down 2.6% from last month",
@@ -55,7 +124,8 @@ export function SummaryCards({ transactions }: { transactions: Transaction[] }) 
     },
     {
       label: "Needs Review",
-      value: String(needsReview),
+      value: needsReview,
+      format: (value: number) => String(Math.round(value)),
       trend: `${pending} pending`,
       up: null,
       footerTitle: "Awaiting categorization",
@@ -70,7 +140,7 @@ export function SummaryCards({ transactions }: { transactions: Transaction[] }) 
           <CardHeader>
             <CardDescription>{card.label}</CardDescription>
             <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              {card.value}
+              <AnimatedValue value={card.value} format={card.format} />
             </CardTitle>
             <CardAction>
               <Badge variant="outline">

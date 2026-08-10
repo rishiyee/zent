@@ -47,6 +47,7 @@ function SettingsLinkGroup({
           <Link
             key={link.title}
             href={link.url}
+            replace
             className={cn(
               "rounded-md px-2.5 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground",
               pathname === link.url && "bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"

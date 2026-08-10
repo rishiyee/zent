@@ -15,7 +15,12 @@ import { getMerchants } from "@/lib/data/merchants";
 import { getTags } from "@/lib/data/tags";
 import { getCategoryRules, getTransactions } from "@/lib/data/transactions";
 
-export default async function TransactionsPage() {
+export default async function TransactionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ transaction?: string }>;
+}) {
+  const { transaction } = await searchParams;
   const [transactions, rules, accounts, goals, tags, categoryGroups, merchants] =
     await Promise.all([
       getTransactions(),
@@ -54,6 +59,7 @@ export default async function TransactionsPage() {
         </div>
         <TransactionsPageContent
           transactions={transactions}
+          initialDetailId={transaction}
           rules={rules}
           accounts={accounts}
           goals={goals}

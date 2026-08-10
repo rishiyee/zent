@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { format } from "date-fns"
 
 import {
   Account,
@@ -10,6 +9,10 @@ import {
   categoryMeta,
   valuableCategories,
 } from "@/lib/accounts"
+
+const accountCashCategories = cashCreditCategories.filter(
+  (category) => category !== "credit-card"
+)
 import { Button } from "@/components/ui/button"
 import {
   Drawer,
@@ -35,14 +38,12 @@ import {
 type EditAccountFormValue = {
   name: string
   category: AccountCategory
-  balance: string
 }
 
 function toFormValue(account: Account): EditAccountFormValue {
   return {
     name: account.name,
     category: account.category,
-    balance: String(account.balance),
   }
 }
 
@@ -55,7 +56,7 @@ export function EditAccountDrawer({
   account: Account | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSave: (id: string, patch: Partial<Omit<Account, "id">>) => void
+  onSave: (id: string, patch: Pick<Account, "name" | "category">) => void
 }) {
   const [form, setForm] = React.useState<EditAccountFormValue | null>(
     account ? toFormValue(account) : null
@@ -67,12 +68,9 @@ export function EditAccountDrawer({
     setForm(toFormValue(account))
   }
 
-  const isManual = account?.source === "manual"
-  const balance = Number.parseFloat(form?.balance ?? "")
   const canSubmit =
     !!form &&
-    form.name.trim().length > 0 &&
-    (!isManual || (!Number.isNaN(balance) && balance >= 0))
+    form.name.trim().length > 0
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -81,9 +79,6 @@ export function EditAccountDrawer({
     onSave(account.id, {
       name: form.name.trim(),
       category: form.category,
-      ...(isManual
-        ? { balance, lastUpdated: format(new Date(), "yyyy-MM-dd") }
-        : {}),
     })
     onOpenChange(false)
   }
@@ -116,7 +111,7 @@ export function EditAccountDrawer({
                   <Label>Category</Label>
                   <Select
                     items={Object.fromEntries(
-                      [...cashCreditCategories, ...valuableCategories].map(
+                      [...accountCashCategories, ...valuableCategories].map(
                         (category) => [category, categoryMeta[category].label]
                       )
                     )}
@@ -132,7 +127,7 @@ export function EditAccountDrawer({
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Cash & Credit</SelectLabel>
-                        {cashCreditCategories.map((category) => (
+                        {accountCashCategories.map((category) => (
                           <SelectItem key={category} value={category}>
                             {categoryMeta[category].label}
                           </SelectItem>
@@ -157,21 +152,14 @@ export function EditAccountDrawer({
                     inputMode="decimal"
                     min="0"
                     step="0.01"
-                    value={form.balance}
-                    onChange={(e) =>
-                      setForm((f) => (f ? { ...f, balance: e.target.value } : f))
-                    }
-                    disabled={!isManual}
-                    required={isManual}
+                    value={account.balance}
+                    disabled
                   />
                 </div>
               </div>
-              {!isManual && (
-                <p className="text-sm text-muted-foreground">
-                  Balance isn&apos;t editable for connected accounts in this
-                  demo.
-                </p>
-              )}
+              <p className="text-sm text-muted-foreground">
+                Balance is managed by income and expense transactions.
+              </p>
             </div>
             <DrawerFooter>
               <Button type="submit" disabled={!canSubmit}>
