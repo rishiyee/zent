@@ -34,6 +34,10 @@ export function DashboardPageSkeleton() {
   )
 }
 
+export function SettingsModalContentSkeleton() {
+  return <Skeleton className="h-96 min-w-0 flex-1 rounded-xl" />
+}
+
 export function SettingsPageSkeleton() {
   return (
     <>

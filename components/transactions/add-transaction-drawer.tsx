@@ -13,15 +13,15 @@ import {
 import { CategoryGroup } from "@/lib/categories"
 import { Button } from "@/components/ui/button"
 import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 import {
   TransactionFormFields,
   TransactionFormValue,
@@ -92,26 +92,27 @@ export function AddTransactionDrawer({
   }
 
   return (
-    <Sheet
+    <Drawer
       open={open}
+      swipeDirection="right"
       onOpenChange={(next) => {
         setOpen(next)
         if (!next) setForm(emptyForm(accounts))
       }}
     >
-      <SheetTrigger render={<Button size="sm" />}>
+      <DrawerTrigger render={<Button size="sm" className="order-first w-full sm:order-none sm:w-auto" />}>
         <Plus />
         Add transaction
-      </SheetTrigger>
-      <SheetContent className="gap-0 overflow-hidden">
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-          <SheetHeader>
-            <SheetTitle>Add transaction</SheetTitle>
-            <SheetDescription>
+      </DrawerTrigger>
+      <DrawerContent>
+        <form onSubmit={handleSubmit} className="flex h-full flex-col">
+          <DrawerHeader>
+            <DrawerTitle>Add transaction</DrawerTitle>
+            <DrawerDescription>
               Record a new income or expense, or log cash and other
               untracked activity.
-            </SheetDescription>
-          </SheetHeader>
+            </DrawerDescription>
+          </DrawerHeader>
           <div className="flex flex-col gap-4 overflow-y-auto p-4">
             <TransactionFormFields
               value={form}
@@ -121,14 +122,14 @@ export function AddTransactionDrawer({
               merchants={merchants}
             />
           </div>
-          <SheetFooter>
+          <DrawerFooter>
             <Button type="submit">Save transaction</Button>
-            <SheetClose render={<Button variant="outline" type="button" />}>
+            <DrawerClose render={<Button variant="outline" type="button" />}>
               Cancel
-            </SheetClose>
-          </SheetFooter>
+            </DrawerClose>
+          </DrawerFooter>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DrawerContent>
+    </Drawer>
   )
 }
