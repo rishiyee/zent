@@ -14,6 +14,7 @@ type TransactionRow = {
   notes: string | null
   goal_id: string | null
   transaction_tags: { tag_id: string }[] | null
+  transfer_to_account_id: string | null
 }
 
 function toTransaction(row: TransactionRow): Transaction {
@@ -32,6 +33,7 @@ function toTransaction(row: TransactionRow): Transaction {
     tagIds: (row.transaction_tags ?? []).map((t) => t.tag_id),
     linkedPaymentId:
       row.category === "Credit card payment" ? "credit-card-payment" : null,
+    transferToAccountId: row.transfer_to_account_id,
   }
 }
 

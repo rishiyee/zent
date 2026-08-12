@@ -85,6 +85,7 @@ export function AddTransactionDrawer({
       notes: form.notes.trim() || undefined,
       goalId: null,
       tagIds: [],
+      transferToAccountId: null,
     })
 
     setForm(emptyForm(accounts))

@@ -64,6 +64,7 @@ export async function addTransaction(transaction: Omit<Transaction, "id">) {
       source: transaction.source,
       notes: transaction.notes ?? null,
       goal_id: transaction.goalId,
+      transfer_to_account_id: transaction.transferToAccountId,
     })
     .select("id")
     .single()
@@ -78,6 +79,15 @@ export async function addTransaction(transaction: Omit<Transaction, "id">) {
   }
 
   await adjustAccountBalance(supabase, dbAccountId, transaction.type, transaction.amount, 1)
+  if (transaction.transferToAccountId) {
+    await adjustAccountBalance(
+      supabase,
+      transaction.transferToAccountId,
+      "income",
+      transaction.amount,
+      1
+    )
+  }
 
   revalidateTransactions()
 }
@@ -87,7 +97,7 @@ export async function updateTransaction(id: string, patch: Partial<Transaction>)
 
   const { data: existing, error: fetchError } = await supabase
     .from("transactions")
-    .select("account_id, type, amount")
+    .select("account_id, type, amount, transfer_to_account_id")
     .eq("id", id)
     .single()
   if (fetchError) throw fetchError
@@ -103,6 +113,8 @@ export async function updateTransaction(id: string, patch: Partial<Transaction>)
   if (patch.source !== undefined) dbPatch.source = patch.source
   if (patch.notes !== undefined) dbPatch.notes = patch.notes ?? null
   if (patch.goalId !== undefined) dbPatch.goal_id = patch.goalId
+  if (patch.transferToAccountId !== undefined)
+    dbPatch.transfer_to_account_id = patch.transferToAccountId
 
   if (Object.keys(dbPatch).length) {
     const { error } = await supabase.from("transactions").update(dbPatch).eq("id", id)
@@ -138,6 +150,30 @@ export async function updateTransaction(id: string, patch: Partial<Transaction>)
     await adjustAccountBalance(supabase, newAccountId, newType, newAmount, 1)
   }
 
+  const existingTransferToAccountId = existing.transfer_to_account_id as string | null
+  const newTransferToAccountId =
+    patch.transferToAccountId !== undefined
+      ? patch.transferToAccountId
+      : existingTransferToAccountId
+
+  if (
+    existingTransferToAccountId !== newTransferToAccountId ||
+    newAmount !== Number(existing.amount)
+  ) {
+    if (existingTransferToAccountId) {
+      await adjustAccountBalance(
+        supabase,
+        existingTransferToAccountId,
+        "income",
+        Number(existing.amount),
+        -1
+      )
+    }
+    if (newTransferToAccountId) {
+      await adjustAccountBalance(supabase, newTransferToAccountId, "income", newAmount, 1)
+    }
+  }
+
   revalidateTransactions()
 }
 
@@ -146,7 +182,7 @@ export async function deleteTransaction(id: string) {
 
   const { data: existing, error: fetchError } = await supabase
     .from("transactions")
-    .select("account_id, type, amount")
+    .select("account_id, type, amount, transfer_to_account_id")
     .eq("id", id)
     .single()
   if (fetchError) throw fetchError
@@ -155,6 +191,15 @@ export async function deleteTransaction(id: string) {
   if (error) throw error
 
   await adjustAccountBalance(supabase, existing.account_id, existing.type, Number(existing.amount), -1)
+  if (existing.transfer_to_account_id) {
+    await adjustAccountBalance(
+      supabase,
+      existing.transfer_to_account_id,
+      "income",
+      Number(existing.amount),
+      -1
+    )
+  }
 
   revalidateTransactions()
 }

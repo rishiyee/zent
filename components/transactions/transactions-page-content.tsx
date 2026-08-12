@@ -26,6 +26,7 @@ import { LedgerFilters, LedgerToolbar, emptyLedgerFilters } from "@/components/t
 import { LedgerSort, LedgerTable } from "@/components/transactions/ledger-table"
 import { SplitTransactionDialog } from "@/components/transactions/split-transaction-dialog"
 import { TransactionDetailSheet } from "@/components/transactions/transaction-detail-sheet"
+import { TransferDrawer } from "@/components/transactions/transfer-drawer"
 
 function matchesFilters(txn: Transaction, filters: LedgerFilters) {
   if (filters.search) {
@@ -98,6 +99,7 @@ export function TransactionsPageContent({
       : null
   )
   const [editId, setEditId] = React.useState<string | null>(null)
+  const [transferEditId, setTransferEditId] = React.useState<string | null>(null)
   const [splitId, setSplitId] = React.useState<string | null>(null)
 
   const filtered = React.useMemo(
@@ -108,11 +110,17 @@ export function TransactionsPageContent({
   const selectedCount = Object.keys(selected).length
   const detailTransaction = transactions.find((t) => t.id === detailId) ?? null
   const editTransaction = transactions.find((t) => t.id === editId) ?? null
+  const transferEditTransaction =
+    transactions.find((t) => t.id === transferEditId) ?? null
   const splitTransactionRecord = transactions.find((t) => t.id === splitId) ?? null
 
   function openEdit(transaction: Transaction) {
     setDetailId(null)
-    setEditId(transaction.id)
+    if (transaction.transferToAccountId) {
+      setTransferEditId(transaction.id)
+    } else {
+      setEditId(transaction.id)
+    }
   }
 
   function invalidate() {
@@ -130,6 +138,7 @@ export function TransactionsPageContent({
     })
     if (detailId === id) setDetailId(null)
     if (editId === id) setEditId(null)
+    if (transferEditId === id) setTransferEditId(null)
     void notify(deleteTransaction(id), "Transaction deleted").then(invalidate)
   }
 
@@ -217,6 +226,13 @@ export function TransactionsPageContent({
         accounts={accounts}
         categoryGroups={categoryGroups}
         merchants={merchants}
+      />
+      <TransferDrawer
+        accounts={accounts}
+        open={!!transferEditId}
+        onOpenChange={(open) => !open && setTransferEditId(null)}
+        transaction={transferEditTransaction}
+        onUpdate={handleSaveEdit}
       />
       <BulkEditDrawer
         count={selectedCount}

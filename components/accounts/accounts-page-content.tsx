@@ -9,6 +9,7 @@ import {
   getAccountsData,
   updateAccount,
 } from "@/app/(dashboard)/accounts/actions"
+import { addTransaction } from "@/app/(dashboard)/transactions/actions"
 import { Account } from "@/lib/accounts"
 import { queryKeys } from "@/lib/query-keys"
 import { notify } from "@/components/ui/toast"
@@ -61,6 +62,9 @@ export function AccountsPageContent({
         data={visibleAccounts}
         onAdd={(account) =>
           void notify(addAccount(account), "Account added").then(invalidate)
+        }
+        onTransfer={(transaction) =>
+          void notify(addTransaction(transaction), "Transfer completed").then(invalidate)
         }
         onRowClick={(account) => setDetailId(account.id)}
       />

@@ -1,9 +1,14 @@
 "use client"
 
+import * as React from "react"
+import { ArrowRightLeft } from "lucide-react"
+
 import { Account, categoryMeta } from "@/lib/accounts"
+import { Transaction } from "@/lib/transactions"
 import { useCurrency } from "@/components/currency-provider"
 import { AddAccountDrawer } from "@/components/accounts/add-account-drawer"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -12,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { TransferDrawer } from "@/components/transactions/transfer-drawer"
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -22,13 +28,16 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
 export function AccountsView({
   data,
   onAdd,
+  onTransfer,
   onRowClick,
 }: {
   data: Account[]
   onAdd: (account: Omit<Account, "id">) => void
+  onTransfer: (transaction: Omit<Transaction, "id">) => void
   onRowClick: (account: Account) => void
 }) {
   const { format } = useCurrency()
+  const [transferOpen, setTransferOpen] = React.useState(false)
   return (
     <div>
       <div className="mb-2 flex items-start justify-between gap-4">
@@ -38,7 +47,24 @@ export function AccountsView({
             Connected accounts and manually tracked assets.
           </p>
         </div>
-        <AddAccountDrawer onAdd={onAdd} />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={data.length < 2}
+            onClick={() => setTransferOpen(true)}
+          >
+            <ArrowRightLeft />
+            Transfer
+          </Button>
+          <TransferDrawer
+            accounts={data}
+            open={transferOpen}
+            onOpenChange={setTransferOpen}
+            onSave={onTransfer}
+          />
+          <AddAccountDrawer onAdd={onAdd} />
+        </div>
       </div>
       <div className="overflow-hidden rounded-lg border">
         <Table>

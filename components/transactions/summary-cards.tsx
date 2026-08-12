@@ -70,10 +70,10 @@ export function SummaryCards({
 }) {
   const { format } = useCurrency()
   const income = transactions
-    .filter((t) => t.type === "income" && !t.linkedPaymentId)
+    .filter((t) => t.type === "income" && !t.linkedPaymentId && !t.transferToAccountId)
     .reduce((sum, t) => sum + t.amount, 0)
   const expenses = transactions
-    .filter((t) => t.type === "expense" && !t.linkedPaymentId)
+    .filter((t) => t.type === "expense" && !t.linkedPaymentId && !t.transferToAccountId)
     .reduce((sum, t) => sum + t.amount, 0)
 
   // Cash balance only counts transactions against asset accounts (checking,

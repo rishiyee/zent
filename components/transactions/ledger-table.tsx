@@ -208,9 +208,11 @@ export function LedgerTable({
                         {!txn.linkedPaymentId && <DropdownMenuItem onClick={() => onEdit(txn)}>
                           Edit transaction
                         </DropdownMenuItem>}
-                        {!txn.linkedPaymentId && <DropdownMenuItem onClick={() => onSplit(txn)}>
-                          Split transaction
-                        </DropdownMenuItem>}
+                        {!txn.linkedPaymentId && !txn.transferToAccountId && (
+                          <DropdownMenuItem onClick={() => onSplit(txn)}>
+                            Split transaction
+                          </DropdownMenuItem>
+                        )}
                         {!txn.linkedPaymentId && txn.status !== "reviewed" && (
                           <DropdownMenuItem onClick={() => onMarkReviewed(txn.id)}>
                             Mark as reviewed
