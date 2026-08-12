@@ -25,9 +25,9 @@ import {
 } from "@/components/ui/select"
 import { AddTransactionDrawer } from "@/components/transactions/add-transaction-drawer"
 import { AmountRange, AmountRangeFilter } from "@/components/transactions/amount-range-filter"
+import { BulkImportWizard } from "@/components/transactions/bulk-import-wizard"
 import { DateRangeFilter } from "@/components/transactions/date-range-filter"
 import { FacetedFilter } from "@/components/transactions/faceted-filter"
-import { ImportCsvDialog } from "@/components/transactions/import-csv-dialog"
 import { LedgerSort } from "@/components/transactions/ledger-table"
 
 export type LedgerFilters = {
@@ -65,6 +65,7 @@ export function LedgerToolbar({
   merchants,
   onAdd,
   accounts,
+  transactions,
   selectedCount,
   onBulkEdit,
   onClearSelection,
@@ -78,6 +79,7 @@ export function LedgerToolbar({
   merchants: string[]
   onAdd: (transaction: Omit<Transaction, "id">) => void
   accounts: TransactionAccountOption[]
+  transactions: Transaction[]
   selectedCount: number
   onBulkEdit: () => void
   onClearSelection: () => void
@@ -174,7 +176,12 @@ export function LedgerToolbar({
             <Wand2 />
             Rules
           </Button>
-          <ImportCsvDialog accounts={accounts} categoryGroups={categoryGroups} />
+          <BulkImportWizard
+            accounts={accounts}
+            categoryGroups={categoryGroups}
+            rules={rules}
+            transactions={transactions}
+          />
           <AddTransactionDrawer
             onAdd={onAdd}
             rules={rules}

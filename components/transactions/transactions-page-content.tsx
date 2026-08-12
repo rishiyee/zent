@@ -190,6 +190,7 @@ export function TransactionsPageContent({
             void notify(addTransaction(txn), "Transaction added").then(invalidate)
           }
           accounts={accounts}
+          transactions={transactions}
           selectedCount={selectedCount}
           onBulkEdit={() => setBulkEditOpen(true)}
           onClearSelection={() => setSelected({})}
