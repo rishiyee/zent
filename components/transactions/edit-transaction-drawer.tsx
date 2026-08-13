@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { format } from "date-fns"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 import { Transaction, TransactionAccountOption } from "@/lib/transactions"
 import { CategoryGroup } from "@/lib/categories"
@@ -51,6 +52,7 @@ export function EditTransactionDrawer({
   categoryGroups: CategoryGroup[]
   merchants: string[]
 }) {
+  const isMobile = useIsMobile()
   const [form, setForm] = React.useState<TransactionFormValue | null>(
     transaction ? toFormValue(transaction) : null
   )
@@ -86,17 +88,18 @@ export function EditTransactionDrawer({
   }
 
   return (
-    <Drawer open={open} swipeDirection="right" onOpenChange={onOpenChange}>
-      <DrawerContent>
+    <Drawer open={open} swipeDirection={isMobile ? "down" : "right"} showSwipeHandle={isMobile} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[calc(100dvh-1rem)]">
         {form && (
-          <form onSubmit={handleSubmit} className="flex h-full flex-col">
-            <DrawerHeader>
+          <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <DrawerHeader className="border-b">
               <DrawerTitle>Edit transaction</DrawerTitle>
               <DrawerDescription>
                 Update the details for {transaction?.description}.
               </DrawerDescription>
             </DrawerHeader>
-            <div className="flex flex-col gap-4 overflow-y-auto p-4">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pb-8 [-webkit-overflow-scrolling:touch]">
+              <div className="flex flex-col gap-4">
               <TransactionFormFields
                 value={form}
                 onChange={handleChange}
@@ -104,8 +107,9 @@ export function EditTransactionDrawer({
                 categoryGroups={categoryGroups}
                 merchants={merchants}
               />
+              </div>
             </div>
-            <DrawerFooter>
+            <DrawerFooter className="border-t bg-background pb-[max(1rem,env(safe-area-inset-bottom))]">
               <Button type="submit">Save changes</Button>
               <DrawerClose render={<Button variant="outline" type="button" />}>
                 Cancel

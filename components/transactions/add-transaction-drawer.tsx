@@ -138,16 +138,17 @@ export function AddTransactionDrawer({
           Add transaction
         </DrawerTrigger>
       )}
-      <DrawerContent>
-        <form ref={formRef} onSubmit={handleSubmit} className="flex h-full flex-col">
-          <DrawerHeader>
+      <DrawerContent className="max-h-[calc(100dvh-1rem)]">
+        <form ref={formRef} onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <DrawerHeader className="border-b">
             <DrawerTitle>Add transaction</DrawerTitle>
             <DrawerDescription>
               Record a new income or expense, or log cash and other
               untracked activity. Press Ctrl/Cmd + Enter to save.
             </DrawerDescription>
           </DrawerHeader>
-          <div className="flex flex-col gap-4 overflow-y-auto p-4">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pb-8 [-webkit-overflow-scrolling:touch]">
+            <div className="flex flex-col gap-4">
             <TransactionFormFields
               value={form}
               onChange={handleChange}
@@ -155,8 +156,9 @@ export function AddTransactionDrawer({
               categoryGroups={categoryGroups}
               merchants={merchants}
             />
+            </div>
           </div>
-          <DrawerFooter>
+          <DrawerFooter className="border-t bg-background pb-[max(1rem,env(safe-area-inset-bottom))]">
             <Button type="submit">Save transaction</Button>
             <DrawerClose render={<Button variant="outline" type="button" />}>
               Cancel
