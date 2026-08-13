@@ -97,8 +97,69 @@ export function LedgerTable({
     onSelectedChange(next)
   }
 
+  function TransactionActions({ transaction }: { transaction: Transaction }) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
+          <MoreHorizontal />
+          <span className="sr-only">Actions for {transaction.description}</span>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onRowClick(transaction)}>View details</DropdownMenuItem>
+          {!transaction.linkedPaymentId && <DropdownMenuItem onClick={() => onEdit(transaction)}>Edit transaction</DropdownMenuItem>}
+          {!transaction.linkedPaymentId && !transaction.transferToAccountId && <DropdownMenuItem onClick={() => onSplit(transaction)}>Split transaction</DropdownMenuItem>}
+          {!transaction.linkedPaymentId && transaction.status !== "reviewed" && <DropdownMenuItem onClick={() => onMarkReviewed(transaction.id)}>Mark as reviewed</DropdownMenuItem>}
+          {!transaction.linkedPaymentId && <DropdownMenuSeparator />}
+          {!transaction.linkedPaymentId && <DropdownMenuItem variant="destructive" onClick={() => onDelete(transaction.id)}>Delete</DropdownMenuItem>}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
   return (
-    <div className="overflow-hidden rounded-lg border">
+    <>
+      <div className="sm:hidden">
+        {groups.length ? (
+          <div className="grid gap-5">
+            <div className="flex items-center justify-between px-1">
+              <label className="flex min-h-10 items-center gap-3 text-sm text-muted-foreground">
+                <Checkbox checked={allSelected} indeterminate={!allSelected && someSelected} onCheckedChange={(value) => toggleAll(!!value)} aria-label="Select all transactions" />
+                Select all
+              </label>
+              <span className="text-xs text-muted-foreground">{data.length} transaction{data.length === 1 ? "" : "s"}</span>
+            </div>
+            {groups.map((group) => (
+              <section key={group.date} aria-labelledby={`transaction-group-${group.date}`}>
+                <div className="mb-2 flex items-center justify-between px-1">
+                  <h3 id={`transaction-group-${group.date}`} className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{formatGroupLabel(group.date)}</h3>
+                  <span className={`text-xs font-medium tabular-nums ${group.net >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>{group.net >= 0 ? "+" : "-"}{format(Math.abs(group.net))}</span>
+                </div>
+                <div className="overflow-hidden rounded-xl border bg-card">
+                  {group.transactions.map((txn) => (
+                    <div key={txn.id} data-state={selected[txn.id] && "selected"} role="button" tabIndex={0} onClick={() => onRowClick(txn)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onRowClick(txn) } }} className="grid min-h-20 cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b px-3 py-3 text-left last:border-b-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring data-[state=selected]:bg-muted/60">
+                      <div onClick={(event) => event.stopPropagation()}><Checkbox checked={!!selected[txn.id]} onCheckedChange={(value) => toggleOne(txn.id, !!value)} aria-label={`Select ${txn.description}`} /></div>
+                      <div className="min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="truncate font-medium">{txn.description}</span>
+                          <span className={`shrink-0 font-semibold tabular-nums ${txn.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"}`}>{txn.linkedPaymentId ? "" : txn.type === "income" ? "+" : "-"}{format(txn.amount)}</span>
+                        </div>
+                        <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                          <span className="max-w-[45%] truncate">{txn.linkedPaymentId ? "Transfer" : txn.category ?? "Uncategorized"}</span>
+                          <span aria-hidden="true">·</span>
+                          <span className="truncate">{accountName(txn.accountId, accounts)}</span>
+                        </div>
+                        <div className="mt-2"><TransactionStatusBadge status={txn.status} /></div>
+                      </div>
+                      <div onClick={(event) => event.stopPropagation()}><TransactionActions transaction={txn} /></div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : <div className="rounded-xl border px-4 py-12 text-center text-sm text-muted-foreground">No transactions match your filters.</div>}
+      </div>
+      <div className="hidden overflow-hidden rounded-lg border sm:block">
       <Table>
         <TableHeader>
           <TableRow>
@@ -152,7 +213,7 @@ export function LedgerTable({
                       aria-label={`Select ${txn.description}`}
                     />
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell">
+                  <TableCell>
                     <div className="flex flex-col">
                       <span className="font-medium">{txn.description}</span>
                       {txn.notes && (
@@ -194,39 +255,7 @@ export function LedgerTable({
                     {format(txn.amount)}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        render={<Button variant="ghost" size="icon-sm" />}
-                      >
-                        <MoreHorizontal />
-                        <span className="sr-only">Open menu</span>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onRowClick(txn)}>
-                          View details
-                        </DropdownMenuItem>
-                        {!txn.linkedPaymentId && <DropdownMenuItem onClick={() => onEdit(txn)}>
-                          Edit transaction
-                        </DropdownMenuItem>}
-                        {!txn.linkedPaymentId && !txn.transferToAccountId && (
-                          <DropdownMenuItem onClick={() => onSplit(txn)}>
-                            Split transaction
-                          </DropdownMenuItem>
-                        )}
-                        {!txn.linkedPaymentId && txn.status !== "reviewed" && (
-                          <DropdownMenuItem onClick={() => onMarkReviewed(txn.id)}>
-                            Mark as reviewed
-                          </DropdownMenuItem>
-                        )}
-                        {!txn.linkedPaymentId && <DropdownMenuSeparator />}
-                        {!txn.linkedPaymentId && <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() => onDelete(txn.id)}
-                        >
-                          Delete
-                        </DropdownMenuItem>}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <TransactionActions transaction={txn} />
                   </TableCell>
                 </TableRow>
               )),
@@ -240,6 +269,7 @@ export function LedgerTable({
           )}
         </TableBody>
       </Table>
-    </div>
+      </div>
+    </>
   )
 }

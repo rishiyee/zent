@@ -13,6 +13,7 @@ import {
   Receipt,
   Tags,
   Wallet,
+  X,
 } from "lucide-react"
 
 import {
@@ -32,7 +33,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
 
 const nav = {
   overview: [
@@ -63,13 +66,18 @@ export function AppSidebar({
   user: { email: string; name: string; avatarUrl?: string }
 }) {
   const pathname = usePathname()
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  function closeMobileSidebar() {
+    if (isMobile) setOpenMobile(false)
+  }
 
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
+    <Sidebar id="app-navigation" collapsible="icon" {...props}>
+      <SidebarHeader className="border-b border-sidebar-border p-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<a href="#" />}>
+            <SidebarMenuButton size="lg" render={<Link href="/" onClick={closeMobileSidebar} />}>
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <Wallet className="size-4" />
               </div>
@@ -80,6 +88,18 @@ export function AppSidebar({
                 </span>
               </div>
             </SidebarMenuButton>
+            {isMobile && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-1/2 -translate-y-1/2"
+                onClick={() => setOpenMobile(false)}
+                aria-label="Close navigation"
+              >
+                <X />
+              </Button>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -91,7 +111,7 @@ export function AppSidebar({
               {nav.overview.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
-                    render={<Link href={item.url} />}
+                    render={<Link href={item.url} onClick={closeMobileSidebar} />}
                     isActive={item.url !== "#" && pathname === item.url}
                     tooltip={item.title}
                   >
@@ -109,7 +129,7 @@ export function AppSidebar({
             <SidebarMenu>
               {nav.planning.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton render={<a href={item.url} />} tooltip={item.title}>
+                  <SidebarMenuButton render={<a href={item.url} onClick={item.url !== "#" ? closeMobileSidebar : undefined} />} tooltip={item.title}>
                     <item.icon />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
@@ -124,7 +144,7 @@ export function AppSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              render={<Link href="/settings" />}
+              render={<Link href="/settings" onClick={closeMobileSidebar} />}
               isActive={pathname === "/settings"}
               tooltip="Settings"
             >

@@ -26,6 +26,7 @@ import { accountName, transactionAccountOptions, UNCATEGORIZED } from "@/lib/tra
 import { cn } from "@/lib/utils"
 import { useCurrency } from "@/components/currency-provider"
 import { CategorySelect } from "@/components/transactions/category-select"
+import { PayeeCombobox } from "@/components/transactions/payee-combobox"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -65,11 +66,12 @@ function defaultSchedule(name: string, accountId: string): RecurringScheduleInpu
 }
 
 function ScheduleEditor({
-  editor, accounts, categoryGroups, onChange, onClose, onSaved,
+  editor, accounts, categoryGroups, merchants, onChange, onClose, onSaved,
 }: {
   editor: EditorState
   accounts: Account[]
   categoryGroups: CategoryGroup[]
+  merchants: string[]
   onChange: (editor: EditorState) => void
   onClose: () => void
   onSaved: () => void
@@ -99,32 +101,34 @@ function ScheduleEditor({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <div className="mb-1 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><CalendarClock className="size-5" /></div>
-          <DialogTitle>{editor.id ? "Edit recurring transaction" : "Set up recurring transaction"}</DialogTitle>
-          <DialogDescription>Set the pattern once. Each occurrence arrives in your ledger as pending for review.</DialogDescription>
+      <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-y-auto p-0 sm:max-h-[90vh] sm:max-w-2xl">
+        <DialogHeader className="border-b p-4 pr-12 sm:p-6 sm:pr-12">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><CalendarClock className="size-5" /></div>
+            <div className="grid gap-1"><DialogTitle>{editor.id ? "Edit recurring transaction" : "Set up recurring transaction"}</DialogTitle><DialogDescription>Automatically create a pending ledger entry on schedule.</DialogDescription></div>
+          </div>
         </DialogHeader>
-        <form onSubmit={save} className="grid gap-5">
-          <div className="grid gap-4 rounded-xl border p-4">
-            <div><h3 className="font-medium">Transaction details</h3><p className="text-xs text-muted-foreground">What should appear in the ledger?</p></div>
-            <div className="grid gap-2"><Label htmlFor="recurring-merchant">Merchant or description</Label><Input id="recurring-merchant" placeholder="e.g. Netflix or Monthly salary" value={value.merchantName} onChange={(e) => patch({ merchantName: e.target.value })} required /></div>
+        <form onSubmit={save} className="grid gap-5 px-4 pb-4 sm:px-6 sm:pb-6">
+          <section className="grid gap-4">
+            <div><h3 className="font-medium">Transaction details</h3><p className="text-xs text-muted-foreground">Choose what appears in your ledger.</p></div>
+            <div className="grid gap-2"><Label htmlFor="recurring-merchant">Payee / description</Label><PayeeCombobox id="recurring-merchant" placeholder="e.g. Netflix or Monthly salary" value={value.merchantName} onChange={(merchantName) => patch({ merchantName })} merchants={merchants} /></div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2"><Label>Type</Label><Select items={{ expense: "Expense", income: "Income" }} value={value.transactionType} onValueChange={(v) => v && patch({ transactionType: v as "income" | "expense", category: null })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="expense">Expense</SelectItem><SelectItem value="income">Income</SelectItem></SelectContent></Select></div>
             <div className="grid gap-2"><Label htmlFor="recurring-amount">Amount</Label><Input id="recurring-amount" type="number" min="0.01" step="0.01" value={value.amount || ""} onChange={(e) => patch({ amount: Number(e.target.value) })} required /></div>
           </div>
           <div className="grid gap-2"><Label>Account</Label><Select items={Object.fromEntries(transactionAccountOptions(accounts).map((a) => [a.id, a.name]))} value={value.accountId} onValueChange={(v) => v && patch({ accountId: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{transactionAccountOptions(accounts).map((account) => <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>)}</SelectContent></Select></div>
           <div className="grid gap-2"><Label>Category</Label><CategorySelect groups={groups} value={value.category ?? UNCATEGORIZED} onValueChange={(v) => patch({ category: v === UNCATEGORIZED ? null : v })} leadingOptions={[{ value: UNCATEGORIZED, label: "Uncategorized" }]} /></div>
-          </div>
-          <div className="grid gap-4 rounded-xl border p-4">
-            <div><h3 className="font-medium">Schedule</h3><p className="text-xs text-muted-foreground">When should the next transaction be created?</p></div>
+          </section>
+          <div className="h-px bg-border" />
+          <section className="grid gap-4">
+            <div><h3 className="font-medium">Schedule</h3><p className="text-xs text-muted-foreground">Choose when this transaction should recur.</p></div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2"><Label>Repeats</Label><Select items={cadenceLabels} value={value.cadence} onValueChange={(v) => v && patch({ cadence: v as RecurringCadence })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(cadenceLabels).map(([key, label]) => <SelectItem key={key} value={key}>{label}</SelectItem>)}</SelectContent></Select></div>
             <div className="grid gap-2"><Label htmlFor="recurring-next">Next date</Label><Input id="recurring-next" type="date" value={value.nextDate} onChange={(e) => patch({ nextDate: e.target.value })} required /></div>
           </div>
-          </div>
-          {value.amount > 0 && value.nextDate && <div className="flex items-start gap-3 rounded-xl bg-muted/60 p-4"><div className="mt-0.5 flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground"><Check className="size-3.5" /></div><div><p className="text-sm font-medium">Next pending transaction</p><p className="text-sm text-muted-foreground">{format(value.amount)} for {value.merchantName || "this merchant"} on {dateFormatter.format(new Date(`${value.nextDate}T12:00:00`))}, repeating {cadenceLabels[value.cadence].toLowerCase()}.</p></div></div>}
-          <DialogFooter>
+          </section>
+          {value.amount > 0 && value.nextDate && <div className="flex items-start gap-3 rounded-xl border bg-muted/40 p-4"><div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"><Check className="size-4" /></div><div className="min-w-0"><p className="text-sm font-medium">Next transaction</p><p className="mt-0.5 text-sm leading-relaxed text-muted-foreground"><span className="font-medium text-foreground">{format(value.amount)}</span> for {value.merchantName || "this payee"} on {dateFormatter.format(new Date(`${value.nextDate}T12:00:00`))}. Repeats {cadenceLabels[value.cadence].toLowerCase()}.</p></div></div>}
+          <DialogFooter className="-mx-4 -mb-4 sm:-mx-6 sm:-mb-6">
             <DialogClose render={<Button type="button" variant="outline" />}>Cancel</DialogClose>
             <Button type="submit" disabled={pending || !value.merchantName.trim() || value.amount <= 0}>{pending ? "Saving…" : "Save schedule"}</Button>
           </DialogFooter>
@@ -232,7 +236,7 @@ export function MerchantsView({ merchants, accounts, categoryGroups, schedules, 
         </TabsContent>}
       </Tabs>
 
-      <ScheduleEditor editor={editor} accounts={accounts} categoryGroups={categoryGroups} onChange={setEditor} onClose={() => setEditor(null)} onSaved={refresh} />
+      <ScheduleEditor editor={editor} accounts={accounts} categoryGroups={categoryGroups} merchants={merchants.map((merchant) => merchant.name)} onChange={setEditor} onClose={() => setEditor(null)} onSaved={refresh} />
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete recurring schedule?</AlertDialogTitle><AlertDialogDescription>Future transactions for {deleteTarget?.merchantName} will no longer be created. Transactions already added to your ledger will be kept.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep schedule</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={() => { if (!deleteTarget) return; const target = deleteTarget; setDeleteTarget(null); void run(target.id, deleteRecurringSchedule(target.id), "Schedule deleted") }}>Delete schedule</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
       <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}><DialogContent><DialogHeader><DialogTitle>Edit merchant</DialogTitle><DialogDescription>Renames this payee across its transactions and recurring schedules.</DialogDescription></DialogHeader><form onSubmit={submitRename} className="flex flex-col gap-4"><Input value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus /><DialogFooter><DialogClose render={<Button type="button" variant="outline" />}>Cancel</DialogClose><Button type="submit" disabled={pending || !draft.trim()}>{pending ? "Saving…" : "Save"}</Button></DialogFooter></form></DialogContent></Dialog>
     </div>

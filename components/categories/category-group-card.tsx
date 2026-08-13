@@ -9,6 +9,7 @@ import {
   categoryIconPresets,
 } from "@/lib/categories"
 import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/hooks/use-mobile"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +23,20 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer"
 import {
   Select,
   SelectContent,
@@ -48,7 +62,7 @@ function IconPicker({
           type="button"
           onClick={() => onChange(presetIcon)}
           className={cn(
-            "flex size-7 items-center justify-center rounded-md text-base hover:bg-muted",
+            "flex size-10 items-center justify-center rounded-lg text-lg hover:bg-muted sm:size-9",
             icon === presetIcon && "bg-muted ring-1 ring-ring"
           )}
         >
@@ -63,10 +77,12 @@ function CategoryCreateForm({
   initialIcon = categoryIconPresets[0],
   submitLabel,
   onSubmit,
+  autoFocus = true,
 }: {
   initialIcon?: string
   submitLabel: string
   onSubmit: (name: string, icon: string) => void
+  autoFocus?: boolean
 }) {
   const [name, setName] = React.useState("")
   const [icon, setIcon] = React.useState(initialIcon)
@@ -81,7 +97,7 @@ function CategoryCreateForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
       <IconPicker icon={icon} onChange={setIcon} />
       <Input
-        autoFocus
+        autoFocus={autoFocus}
         placeholder="Category name"
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -100,6 +116,7 @@ function CategoryEditorForm({
   initialIcon = categoryIconPresets[0],
   submitLabel,
   onSubmit,
+  autoFocus = true,
 }: {
   allGroups: CategoryGroup[]
   initialGroupId: string
@@ -107,6 +124,7 @@ function CategoryEditorForm({
   initialIcon?: string
   submitLabel: string
   onSubmit: (groupId: string, name: string, icon: string) => void
+  autoFocus?: boolean
 }) {
   const [type, setType] = React.useState<CategoryType>(
     () => allGroups.find((g) => g.id === initialGroupId)?.type ?? "expense"
@@ -172,7 +190,7 @@ function CategoryEditorForm({
       )}
       <IconPicker icon={icon} onChange={setIcon} />
       <Input
-        autoFocus
+        autoFocus={autoFocus}
         placeholder="Category name"
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -181,6 +199,50 @@ function CategoryEditorForm({
         <Plus /> {submitLabel}
       </Button>
     </form>
+  )
+}
+
+function CategoryFormOverlay({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  description: string
+  children: React.ReactNode
+}) {
+  const isMobile = useIsMobile()
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange} showSwipeHandle>
+        <DrawerContent>
+          <DrawerHeader className="border-b p-4 text-left">
+            <DrawerTitle>{title}</DrawerTitle>
+            <DrawerDescription>{description}</DrawerDescription>
+          </DrawerHeader>
+          <div className="overflow-y-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            {children}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        {children}
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -356,30 +418,29 @@ export function CategoryGroupCard({
             <GripVertical className="size-4 shrink-0 cursor-grab text-muted-foreground/50" />
             <span className="text-base leading-none">{category.icon}</span>
             <span className="flex-1 text-sm">{category.name}</span>
-            <Popover
-              open={editingCategoryId === category.id}
-              onOpenChange={(open) => setEditingCategoryId(open ? category.id : null)}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground md:opacity-0 md:group-hover/row:opacity-100 md:group-focus-within/row:opacity-100"
+              onClick={() => setEditingCategoryId(category.id)}
             >
-              <PopoverTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    className="text-muted-foreground opacity-0 group-hover/row:opacity-100"
-                  />
-                }
-              >
                 <Pencil className="size-3.5" />
                 <span className="sr-only">Edit {category.name}</span>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-72">
+            </Button>
+            <CategoryFormOverlay
+              open={editingCategoryId === category.id}
+              onOpenChange={(open) => setEditingCategoryId(open ? category.id : null)}
+              title="Edit category"
+              description={`Update ${category.name} or move it to another group.`}
+            >
                 <CategoryEditorForm
                   allGroups={allGroups}
                   initialGroupId={group.id}
                   initialName={category.name}
                   initialIcon={category.icon}
                   submitLabel="Save changes"
+                  autoFocus={false}
                   onSubmit={(groupId, name, icon) => {
                     onUpdateCategory(category.id, {
                       name,
@@ -389,13 +450,12 @@ export function CategoryGroupCard({
                     setEditingCategoryId(null)
                   }}
                 />
-              </PopoverContent>
-            </Popover>
+            </CategoryFormOverlay>
             <Button
               type="button"
               variant="ghost"
-              size="icon-sm"
-              className="text-muted-foreground opacity-0 group-hover/row:opacity-100"
+              size="icon"
+              className="text-muted-foreground md:opacity-0 md:group-hover/row:opacity-100 md:group-focus-within/row:opacity-100"
               onClick={() => onDeleteCategory(category.id)}
             >
               <Trash2 className="size-3.5" />
@@ -410,27 +470,28 @@ export function CategoryGroupCard({
         )}
       </div>
       <div className="border-t px-4 py-2.5">
-        <Popover open={addOpen} onOpenChange={setAddOpen}>
-          <PopoverTrigger
-            render={
-              <button
-                type="button"
-                className="text-sm text-muted-foreground hover:text-foreground hover:underline"
-              />
-            }
-          >
-            Create Category
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-72">
+        <button
+          type="button"
+          className="min-h-10 text-sm font-medium text-primary hover:underline sm:min-h-0 sm:text-muted-foreground sm:hover:text-foreground"
+          onClick={() => setAddOpen(true)}
+        >
+          Create Category
+        </button>
+        <CategoryFormOverlay
+          open={addOpen}
+          onOpenChange={setAddOpen}
+          title={`Add category to ${group.name}`}
+          description="Choose an icon and give this category a clear name."
+        >
             <CategoryCreateForm
               submitLabel="Add category"
+              autoFocus={false}
               onSubmit={(name, icon) => {
                 onAddCategory(group.id, name, icon)
                 setAddOpen(false)
               }}
             />
-          </PopoverContent>
-        </Popover>
+        </CategoryFormOverlay>
       </div>
     </div>
   )
