@@ -20,7 +20,7 @@ export function DashboardPageSkeleton() {
       <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
         <div className="space-y-2">
           <Skeleton className="h-7 w-56" />
-          <Skeleton className="h-4 w-80" />
+          <Skeleton className="h-4 w-full max-w-80" />
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Skeleton className="h-28 rounded-xl" />
@@ -45,7 +45,7 @@ export function SettingsPageSkeleton() {
       <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
         <div className="space-y-2">
           <Skeleton className="h-7 w-40" />
-          <Skeleton className="h-4 w-72" />
+          <Skeleton className="h-4 w-full max-w-72" />
         </div>
         <div className="flex flex-col gap-6 lg:flex-row">
           <div className="flex w-full flex-col gap-1 lg:w-56">

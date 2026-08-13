@@ -42,7 +42,7 @@ export function TransactionsView({
 
   return (
     <div>
-      <div className="mb-2 flex items-start justify-between gap-4">
+      <div className="mb-2 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-lg font-medium">Transactions</h2>
           <p className="text-sm text-muted-foreground">
