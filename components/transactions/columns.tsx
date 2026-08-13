@@ -49,7 +49,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 })
 
-function TransactionActions() {
+function TransactionActions({ transactionId }: { transactionId: string }) {
   const router = useRouter()
 
   return (
@@ -61,7 +61,9 @@ function TransactionActions() {
         <span className="sr-only">Open menu</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => router.push("/transactions")}>
+        <DropdownMenuItem
+          onClick={() => router.push(`/transactions?transaction=${transactionId}`)}
+        >
           Open in transactions
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -183,7 +185,7 @@ export function getColumns(
   {
     id: "actions",
     enableHiding: false,
-    cell: () => <TransactionActions />,
+    cell: ({ row }) => <TransactionActions transactionId={row.original.id} />,
   },
   ]
 }

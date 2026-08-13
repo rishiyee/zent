@@ -9,7 +9,9 @@ import {
   Check,
   Copy,
   Download,
-  Paperclip,
+  FileSpreadsheet,
+  Loader2,
+  ShieldCheck,
   Upload,
 } from "lucide-react"
 
@@ -64,6 +66,7 @@ import {
 } from "@/components/ui/table"
 import { toast } from "@/components/ui/toast"
 import { CategorySelect } from "@/components/transactions/category-select"
+import { useCurrency } from "@/components/currency-provider"
 
 type Step = "upload" | "map" | "review" | "confirm"
 type ReviewFilter = "all" | "new" | "duplicate" | "error"
@@ -164,7 +167,7 @@ function setTarget(mapping: ColumnMapping, index: number, target: MappingTarget)
 function Stepper({ step }: { step: Step }) {
   const activeIndex = STEPS.findIndex((s) => s.id === step)
   return (
-    <div className="flex items-center">
+    <div className="flex items-start" aria-label={`Step ${activeIndex + 1} of ${STEPS.length}`}>
       {STEPS.map((s, i) => (
         <React.Fragment key={s.id}>
           <div className="flex items-center gap-2">
@@ -182,7 +185,7 @@ function Stepper({ step }: { step: Step }) {
             </div>
             <span
               className={cn(
-                "hidden text-sm sm:inline",
+                "truncate text-xs sm:text-sm",
                 i === activeIndex ? "font-medium text-foreground" : "text-muted-foreground"
               )}
             >
@@ -198,6 +201,8 @@ function Stepper({ step }: { step: Step }) {
 
 function UploadStep({
   fileName,
+  rowCount,
+  loading,
   dragActive,
   onDragActiveChange,
   onFileInput,
@@ -205,6 +210,8 @@ function UploadStep({
   onDownloadTemplate,
 }: {
   fileName: string | null
+  rowCount: number
+  loading: boolean
   dragActive: boolean
   onDragActiveChange: (active: boolean) => void
   onFileInput: (event: React.ChangeEvent<HTMLInputElement>) => void
@@ -221,13 +228,15 @@ function UploadStep({
         onDragLeave={() => onDragActiveChange(false)}
         onDrop={onDrop}
         className={cn(
-          "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors",
+          "flex min-h-64 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 text-center transition-all",
           dragActive ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
         )}
       >
-        <Paperclip className="size-6 text-muted-foreground" />
+        <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+          {loading ? <Loader2 className="size-6 animate-spin" /> : fileName ? <FileSpreadsheet className="size-6" /> : <Upload className="size-6" />}
+        </div>
         <span className="text-sm font-medium">
-          {fileName ?? "Drop a CSV file here, or click to choose one"}
+          {loading ? "Reading your file…" : fileName ?? "Drop your CSV here, or click to browse"}
         </span>
         <span className="text-xs text-muted-foreground">
           Any header names are fine — you&apos;ll map columns next.
@@ -236,9 +245,9 @@ function UploadStep({
       </label>
       <Button
         type="button"
-        variant="ghost"
+        variant="link"
         size="sm"
-        className="self-center"
+        className="h-auto self-center"
         onClick={onDownloadTemplate}
       >
         <Download />
@@ -400,6 +409,18 @@ function ReviewStep({
 
   return (
     <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { id: "new" as const, value: counts.new, label: "Ready", color: "text-emerald-600" },
+          { id: "duplicate" as const, value: counts.duplicate, label: "Duplicates", color: "text-amber-600" },
+          { id: "error" as const, value: counts.error, label: "Need attention", color: "text-destructive" },
+        ].map((item) => (
+          <button key={item.id} type="button" onClick={() => onFilterChange(item.id)} className={cn("rounded-lg border p-3 text-left transition-colors hover:bg-muted/50", filter === item.id && "border-primary bg-primary/5")}>
+            <p className={cn("text-xl font-semibold tabular-nums", item.color)}>{item.value}</p>
+            <p className="text-xs text-muted-foreground">{item.label}</p>
+          </button>
+        ))}
+      </div>
       <div className="flex flex-wrap items-center gap-2">
         {chips.map((chip) => (
           <Button
@@ -422,7 +443,7 @@ function ReviewStep({
         </div>
       </div>
 
-      <div className="max-h-[26rem] overflow-y-auto rounded-lg border">
+      <div className="max-h-[42vh] overflow-y-auto rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -538,6 +559,8 @@ function ConfirmStep({
   adjustBalance,
   onAdjustBalanceChange,
   disableAdjustBalance,
+  netAmount,
+  formatCurrency,
 }: {
   accountName: string
   includedCount: number
@@ -545,19 +568,25 @@ function ConfirmStep({
   adjustBalance: boolean
   onAdjustBalanceChange: (value: boolean) => void
   disableAdjustBalance: boolean
+  netAmount: number
+  formatCurrency: (amount: number) => string
 }) {
   const excluded = totalCount - includedCount
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-lg border p-4 text-sm">
-        Importing <span className="font-medium">{includedCount}</span> of {totalCount} row
-        {totalCount === 1 ? "" : "s"} into <span className="font-medium">{accountName}</span>.
+      <div className="grid gap-3 rounded-xl border bg-muted/20 p-4 sm:grid-cols-3">
+        <div><p className="text-xs text-muted-foreground">Transactions</p><p className="mt-1 text-xl font-semibold tabular-nums">{includedCount}</p></div>
+        <div><p className="text-xs text-muted-foreground">Destination</p><p className="mt-1 truncate font-medium">{accountName}</p></div>
+        <div><p className="text-xs text-muted-foreground">Net change</p><p className={cn("mt-1 text-xl font-semibold tabular-nums", netAmount >= 0 && "text-emerald-600")}>{netAmount >= 0 ? "+" : "−"}{formatCurrency(Math.abs(netAmount))}</p></div>
         {excluded > 0 && (
-          <span className="text-muted-foreground">
-            {" "}
+          <span className="text-xs text-muted-foreground sm:col-span-3">
             {excluded} row{excluded === 1 ? "" : "s"} excluded.
           </span>
         )}
+      </div>
+      <div className="flex items-start gap-2 text-xs text-muted-foreground">
+        <ShieldCheck className="mt-0.5 size-4 shrink-0" />
+        Nothing is imported until you press the final button. Imported transactions can still be edited later.
       </div>
       <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
         <div className="flex flex-col gap-0.5">
@@ -590,6 +619,7 @@ export function BulkImportWizard({
   transactions: Transaction[]
 }) {
   const queryClient = useQueryClient()
+  const { format: formatCurrency } = useCurrency()
 
   const [open, setOpen] = React.useState(false)
   const [step, setStep] = React.useState<Step>("upload")
@@ -604,6 +634,7 @@ export function BulkImportWizard({
   const [adjustBalance, setAdjustBalance] = React.useState(true)
   const [importing, setImporting] = React.useState(false)
   const [dragActive, setDragActive] = React.useState(false)
+  const [loadingFile, setLoadingFile] = React.useState(false)
 
   function reset() {
     setStep("upload")
@@ -614,19 +645,33 @@ export function BulkImportWizard({
     setReviewFilter("all")
     setImporting(false)
     setDragActive(false)
+    setLoadingFile(false)
   }
 
   async function loadFile(file: File) {
-    const text = await file.text()
-    const parsed = parseCsv(text)
-    if (parsed.length === 0) {
-      toast.add({ title: "The file is empty.", type: "error" })
+    if (!file.name.toLowerCase().endsWith(".csv") && file.type !== "text/csv") {
+      toast.add({ title: "Choose a CSV file", description: "Other spreadsheet formats aren’t supported yet.", type: "error" })
       return
     }
-    setFileName(file.name)
-    setTable(parsed)
-    setMapping(detectColumnMapping(parsed[0]))
-    setStep("map")
+    if (file.size > 10 * 1024 * 1024) {
+      toast.add({ title: "That file is too large", description: "CSV files must be 10 MB or smaller.", type: "error" })
+      return
+    }
+    setLoadingFile(true)
+    try {
+      const text = await file.text()
+      const parsed = parseCsv(text)
+      if (parsed.length < 2) {
+        toast.add({ title: "No transactions found", description: "Add a header and at least one data row.", type: "error" })
+        return
+      }
+      setFileName(file.name)
+      setTable(parsed)
+      setMapping(detectColumnMapping(parsed[0]))
+      setStep("map")
+    } finally {
+      setLoadingFile(false)
+    }
   }
 
   async function handleFileInput(event: React.ChangeEvent<HTMLInputElement>) {
@@ -680,6 +725,12 @@ export function BulkImportWizard({
   })
 
   const includedCount = draftRows.filter((r) => r.included).length
+  const netAmount = draftRows
+    .filter((r) => r.included)
+    .reduce(
+      (sum, row) => sum + (row.type === "income" ? 1 : -1) * (Number.parseFloat(row.amount) || 0),
+      0
+    )
   const accountName =
     transactionAccountOptions(accounts).find((a) => a.id === accountId)?.name ?? "account"
 
@@ -728,7 +779,7 @@ export function BulkImportWizard({
         <Upload />
         Bulk Import
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="max-h-[92vh] overflow-hidden sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>Bulk import transactions</DialogTitle>
           <DialogDescription>{activeStep.description}</DialogDescription>
@@ -740,6 +791,8 @@ export function BulkImportWizard({
           {step === "upload" && (
             <UploadStep
               fileName={fileName}
+              rowCount={Math.max(0, table.length - 1)}
+              loading={loadingFile}
               dragActive={dragActive}
               onDragActiveChange={setDragActive}
               onFileInput={handleFileInput}
@@ -782,6 +835,8 @@ export function BulkImportWizard({
               adjustBalance={adjustBalance}
               onAdjustBalanceChange={setAdjustBalance}
               disableAdjustBalance={accountId === "CASH"}
+              netAmount={netAmount}
+              formatCurrency={formatCurrency}
             />
           )}
         </div>
@@ -807,7 +862,7 @@ export function BulkImportWizard({
             <DialogClose render={<Button type="button" variant="ghost" />}>Cancel</DialogClose>
             {step === "map" && (
               <Button type="button" disabled={!mappingComplete} onClick={handleBuildRows}>
-                Next
+                Review import ({includedCount})
                 <ArrowRight />
               </Button>
             )}

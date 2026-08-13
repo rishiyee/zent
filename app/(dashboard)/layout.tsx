@@ -2,8 +2,14 @@ import { redirect } from "next/navigation";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { CurrencyProvider } from "@/components/currency-provider";
+import { GlobalShortcuts } from "@/components/global-shortcuts";
+import { GlobalAddTransaction } from "@/components/global-add-transaction";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
+import { getAccounts } from "@/lib/data/accounts";
+import { getCategoryGroups } from "@/lib/data/categories";
+import { getMerchants } from "@/lib/data/merchants";
+import { getCategoryRules } from "@/lib/data/transactions";
 
 export default async function DashboardLayout({
   children,
@@ -19,11 +25,25 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const [accounts, categoryGroups, merchants, rules] = await Promise.all([
+    getAccounts(),
+    getCategoryGroups(),
+    getMerchants(),
+    getCategoryRules(),
+  ]);
+
   return (
     <CurrencyProvider
       currency={user.user_metadata?.currency as string | undefined}
       region={user.user_metadata?.region as string | undefined}
     >
+      <GlobalShortcuts />
+      <GlobalAddTransaction
+        accounts={accounts}
+        categoryGroups={categoryGroups}
+        merchants={merchants.map((merchant) => merchant.name)}
+        rules={rules}
+      />
       <SidebarProvider>
         <AppSidebar
           user={{

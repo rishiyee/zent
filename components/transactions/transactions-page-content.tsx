@@ -44,7 +44,11 @@ function matchesFilters(txn: Transaction, filters: LedgerFilters) {
     if (!filters.categories.includes(key)) return false
   }
 
-  if (filters.accountIds.length && !filters.accountIds.includes(txn.accountId)) {
+  if (
+    filters.accountIds.length &&
+    !filters.accountIds.includes(txn.accountId) &&
+    !(txn.transferToAccountId && filters.accountIds.includes(txn.transferToAccountId))
+  ) {
     return false
   }
 
@@ -66,6 +70,8 @@ function matchesFilters(txn: Transaction, filters: LedgerFilters) {
 export function TransactionsPageContent({
   transactions: initialTransactions,
   initialDetailId,
+  initialAccountId,
+  initialAddOpen,
   rules,
   accounts,
   goals,
@@ -75,6 +81,8 @@ export function TransactionsPageContent({
 }: {
   transactions: Transaction[]
   initialDetailId?: string
+  initialAccountId?: string
+  initialAddOpen?: boolean
   rules: CategoryRule[]
   accounts: Account[]
   goals: Goal[]
@@ -88,7 +96,13 @@ export function TransactionsPageContent({
     queryFn: getTransactionsData,
     initialData: initialTransactions,
   })
-  const [filters, setFilters] = React.useState<LedgerFilters>(emptyLedgerFilters)
+  const [filters, setFilters] = React.useState<LedgerFilters>(() => ({
+    ...emptyLedgerFilters(),
+    accountIds:
+      initialAccountId && accounts.some((account) => account.id === initialAccountId)
+        ? [initialAccountId]
+        : [],
+  }))
   const [sort, setSort] = React.useState<LedgerSort>("date-desc")
   const [selected, setSelected] = React.useState<Record<string, boolean>>({})
   const [bulkEditOpen, setBulkEditOpen] = React.useState(false)
@@ -186,6 +200,7 @@ export function TransactionsPageContent({
           rules={rules}
           categoryGroups={categoryGroups}
           merchants={merchants}
+          initialAddOpen={initialAddOpen}
           onAdd={(txn) =>
             void notify(addTransaction(txn), "Transaction added").then(invalidate)
           }

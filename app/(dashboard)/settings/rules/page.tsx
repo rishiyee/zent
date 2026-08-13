@@ -7,6 +7,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
+import { PrivacyToggle } from "@/components/privacy-toggle";
 import { SettingsNav } from "@/components/settings/settings-nav";
 import { RulesView } from "@/components/settings/rules-view";
 import { getCategoryGroups } from "@/lib/data/categories";
@@ -30,7 +31,8 @@ export default async function RulesSettingsPage() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1">
+          <PrivacyToggle />
           <ModeToggle />
         </div>
       </header>

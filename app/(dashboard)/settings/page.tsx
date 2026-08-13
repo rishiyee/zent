@@ -7,6 +7,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
+import { PrivacyToggle } from "@/components/privacy-toggle";
 import { SettingsNav } from "@/components/settings/settings-nav";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { createClient } from "@/lib/supabase/server";
@@ -36,7 +37,8 @@ export default async function SettingsPage() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1">
+          <PrivacyToggle />
           <ModeToggle />
         </div>
       </header>

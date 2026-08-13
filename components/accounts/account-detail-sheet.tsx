@@ -1,8 +1,10 @@
 "use client"
 
-import { Pencil, Trash2 } from "lucide-react"
+import Link from "next/link"
+import { ArrowRight, Pencil, Trash2 } from "lucide-react"
 
 import { Account, categoryMeta } from "@/lib/accounts"
+import { Transaction } from "@/lib/transactions"
 import { useCurrency } from "@/components/currency-provider"
 import {
   AlertDialog,
@@ -50,22 +52,31 @@ function DetailRow({
 
 export function AccountDetailSheet({
   account,
+  transactions,
   open,
   onOpenChange,
   onEdit,
   onDelete,
 }: {
   account: Account | null
+  transactions: Transaction[]
   open: boolean
   onOpenChange: (open: boolean) => void
   onEdit: (account: Account) => void
   onDelete: (id: string) => void
 }) {
   const { format } = useCurrency()
+  const accountTransactions = account
+    ? transactions.filter(
+        (transaction) =>
+          transaction.accountId === account.id ||
+          transaction.transferToAccountId === account.id
+      )
+    : []
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
+      <SheetContent className="sm:max-w-lg">
         {account && (
           <>
             <SheetHeader>
@@ -114,6 +125,52 @@ export function AccountDetailSheet({
               <DetailRow label="Account ID">
                 <span className="font-mono text-xs">{account.id}</span>
               </DetailRow>
+              <Separator className="my-3" />
+              <div className="mb-2 flex items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-medium">Recent transactions</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {accountTransactions.length} transaction{accountTransactions.length === 1 ? "" : "s"}
+                  </p>
+                </div>
+                {accountTransactions.length > 0 && (
+                  <Button variant="ghost" size="sm" render={<Link href={`/transactions?account=${account.id}`} />}>
+                    View all
+                    <ArrowRight />
+                  </Button>
+                )}
+              </div>
+              <div className="max-h-72 overflow-y-auto rounded-lg border">
+                {accountTransactions.length ? (
+                  accountTransactions.slice(0, 10).map((transaction) => {
+                    const incomingTransfer = transaction.transferToAccountId === account.id
+                    const isIncome = incomingTransfer || transaction.type === "income"
+
+                    return (
+                      <Link
+                        key={transaction.id}
+                        href={`/transactions?transaction=${transaction.id}`}
+                        className="flex items-center justify-between gap-4 border-b px-3 py-2.5 transition-colors last:border-b-0 hover:bg-muted/50"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{transaction.description}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {dateFormatter.format(new Date(`${transaction.date}T00:00:00`))}
+                            {transaction.category ? ` · ${transaction.category}` : ""}
+                          </p>
+                        </div>
+                        <span className={`shrink-0 text-sm font-medium tabular-nums ${isIncome ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"}`}>
+                          {isIncome ? "+" : "-"}{format(transaction.amount)}
+                        </span>
+                      </Link>
+                    )
+                  })
+                ) : (
+                  <p className="px-3 py-8 text-center text-sm text-muted-foreground">
+                    No transactions for this account yet.
+                  </p>
+                )}
+              </div>
             </div>
             <SheetFooter>
               <Button onClick={() => onEdit(account)}>

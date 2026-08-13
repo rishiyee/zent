@@ -7,6 +7,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
+import { PrivacyToggle } from "@/components/privacy-toggle";
 import { CategoriesView } from "@/components/categories/categories-view";
 import { getCategoryGroups } from "@/lib/data/categories";
 
@@ -25,7 +26,8 @@ export default async function CategoriesPage() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1">
+          <PrivacyToggle />
           <ModeToggle />
         </div>
       </header>

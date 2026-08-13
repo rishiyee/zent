@@ -7,6 +7,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
+import { PrivacyToggle } from "@/components/privacy-toggle";
 import { TransactionsPageContent } from "@/components/transactions/transactions-page-content";
 import { getAccounts } from "@/lib/data/accounts";
 import { getCategoryGroups } from "@/lib/data/categories";
@@ -18,9 +19,9 @@ import { getCategoryRules, getTransactions } from "@/lib/data/transactions";
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ transaction?: string }>;
+  searchParams: Promise<{ transaction?: string; account?: string; add?: string }>;
 }) {
-  const { transaction } = await searchParams;
+  const { transaction, account, add } = await searchParams;
   const [transactions, rules, accounts, goals, tags, categoryGroups, merchants] =
     await Promise.all([
       getTransactions(),
@@ -44,7 +45,8 @@ export default async function TransactionsPage({
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1">
+          <PrivacyToggle />
           <ModeToggle />
         </div>
       </header>
@@ -60,6 +62,8 @@ export default async function TransactionsPage({
         <TransactionsPageContent
           transactions={transactions}
           initialDetailId={transaction}
+          initialAccountId={account}
+          initialAddOpen={add === "1"}
           rules={rules}
           accounts={accounts}
           goals={goals}

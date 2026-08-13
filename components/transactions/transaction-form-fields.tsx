@@ -28,6 +28,8 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { CategorySelect } from "@/components/transactions/category-select"
 import { PayeeCombobox } from "@/components/transactions/payee-combobox"
+import { calculateExpression } from "@/lib/calculator"
+import { useCurrency } from "@/components/currency-provider"
 
 export { UNCATEGORIZED }
 
@@ -55,6 +57,7 @@ export function TransactionFormFields({
   categoryGroups: CategoryGroup[]
   merchants: string[]
 }) {
+  const { format: formatCurrency } = useCurrency()
   const categoryGroupsForType = categoryGroups.filter(
     (group) => group.type === value.type
   )
@@ -71,6 +74,15 @@ export function TransactionFormFields({
       ...(categoryStillValid ? {} : { category: UNCATEGORIZED }),
     })
   }
+
+  function resolveAmount() {
+    const result = calculateExpression(value.amount)
+    if (result !== null) onChange({ amount: String(Math.round(Math.abs(result) * 100) / 100) })
+  }
+
+  const calculatedAmount = calculateExpression(value.amount)
+  const showsCalculation =
+    calculatedAmount !== null && /[+\-*/×÷()]/.test(value.amount.trim().replace(/^-/, ""))
 
   return (
     <>
@@ -89,15 +101,30 @@ export function TransactionFormFields({
           <Label htmlFor="amount">Amount</Label>
           <Input
             id="amount"
-            type="number"
+            type="text"
             inputMode="decimal"
-            min="0.01"
-            step="0.01"
             placeholder="0.00"
             value={value.amount}
             onChange={(e) => onChange({ amount: e.target.value })}
+            onBlur={resolveAmount}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !(event.metaKey || event.ctrlKey)) {
+                event.preventDefault()
+                resolveAmount()
+              }
+            }}
             required
           />
+          {showsCalculation ? (
+            <button
+              type="button"
+              className="self-start text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={resolveAmount}
+            >
+              = {formatCurrency(Math.abs(calculatedAmount))}
+            </button>
+          ) : null}
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="date">Date</Label>

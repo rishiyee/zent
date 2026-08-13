@@ -7,6 +7,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
+import { PrivacyToggle } from "@/components/privacy-toggle";
 import { CreditCardsView } from "@/components/credit-cards/credit-cards-view";
 import { getAccounts } from "@/lib/data/accounts";
 import { getCreditCardPayments, getCreditCards } from "@/lib/data/credit-cards";
@@ -32,7 +33,8 @@ export default async function CreditCardsPage() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1">
+          <PrivacyToggle />
           <ModeToggle />
         </div>
       </header>

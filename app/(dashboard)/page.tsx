@@ -7,6 +7,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
+import { PrivacyToggle } from "@/components/privacy-toggle";
 import { CashFlowChart } from "@/components/transactions/cash-flow-chart";
 import { SummaryCards } from "@/components/transactions/summary-cards";
 import { TransactionsView } from "@/components/transactions/transactions-view";
@@ -15,6 +16,8 @@ import { getAccounts } from "@/lib/data/accounts";
 import { getCategoryGroups } from "@/lib/data/categories";
 import { getCreditCardPayments, getCreditCards } from "@/lib/data/credit-cards";
 import { getMerchants } from "@/lib/data/merchants";
+import { getGoals } from "@/lib/data/goals";
+import { getTags } from "@/lib/data/tags";
 import { getCategoryRules, getTransactions } from "@/lib/data/transactions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -26,13 +29,15 @@ export default async function DashboardPage() {
     user?.email?.split("@")[0] ??
     "there";
 
-  const [transactions, accounts, rules, categoryGroups, merchants, creditCards, creditCardPayments] =
+  const [transactions, accounts, rules, categoryGroups, merchants, goals, tags, creditCards, creditCardPayments] =
     await Promise.all([
       getTransactions(),
       getAccounts(),
       getCategoryRules(),
       getCategoryGroups(),
       getMerchants(),
+      getGoals(),
+      getTags(),
       getCreditCards(),
       getCreditCardPayments(),
     ]);
@@ -49,7 +54,8 @@ export default async function DashboardPage() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1">
+          <PrivacyToggle />
           <ModeToggle />
         </div>
       </header>
@@ -73,6 +79,8 @@ export default async function DashboardPage() {
           rules={rules}
           categoryGroups={categoryGroups}
           merchants={merchants.map((m) => m.name)}
+          goals={goals}
+          tags={tags}
         />
       </div>
     </>

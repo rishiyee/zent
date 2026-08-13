@@ -63,6 +63,7 @@ export function LedgerToolbar({
   rules,
   categoryGroups,
   merchants,
+  initialAddOpen,
   onAdd,
   accounts,
   transactions,
@@ -77,6 +78,7 @@ export function LedgerToolbar({
   rules: CategoryRule[]
   categoryGroups: CategoryGroup[]
   merchants: string[]
+  initialAddOpen?: boolean
   onAdd: (transaction: Omit<Transaction, "id">) => void
   accounts: TransactionAccountOption[]
   transactions: Transaction[]
@@ -183,6 +185,7 @@ export function LedgerToolbar({
             transactions={transactions}
           />
           <AddTransactionDrawer
+            initialOpen={initialAddOpen}
             onAdd={onAdd}
             rules={rules}
             accounts={accounts}

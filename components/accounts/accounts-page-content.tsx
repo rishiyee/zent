@@ -9,8 +9,12 @@ import {
   getAccountsData,
   updateAccount,
 } from "@/app/(dashboard)/accounts/actions"
-import { addTransaction } from "@/app/(dashboard)/transactions/actions"
+import {
+  addTransaction,
+  getTransactionsData,
+} from "@/app/(dashboard)/transactions/actions"
 import { Account } from "@/lib/accounts"
+import { Transaction } from "@/lib/transactions"
 import { queryKeys } from "@/lib/query-keys"
 import { notify } from "@/components/ui/toast"
 import { AccountDetailSheet } from "@/components/accounts/account-detail-sheet"
@@ -20,14 +24,21 @@ import { NetWorthSummary } from "@/components/accounts/net-worth-summary"
 
 export function AccountsPageContent({
   accounts: initialAccounts,
+  transactions: initialTransactions,
 }: {
   accounts: Account[]
+  transactions: Transaction[]
 }) {
   const queryClient = useQueryClient()
   const { data: accounts } = useQuery({
     queryKey: queryKeys.accounts,
     queryFn: getAccountsData,
     initialData: initialAccounts,
+  })
+  const { data: transactions } = useQuery({
+    queryKey: queryKeys.transactions,
+    queryFn: getTransactionsData,
+    initialData: initialTransactions,
   })
   const visibleAccounts = accounts.filter(
     (account) => account.category !== "credit-card"
@@ -70,6 +81,7 @@ export function AccountsPageContent({
       />
       <AccountDetailSheet
         account={detailAccount}
+        transactions={transactions}
         open={!!detailId}
         onOpenChange={(open) => !open && setDetailId(null)}
         onEdit={openEdit}

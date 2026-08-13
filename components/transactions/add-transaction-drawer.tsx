@@ -3,6 +3,7 @@
 import * as React from "react"
 import { format } from "date-fns"
 import { Plus } from "lucide-react"
+import { calculateExpression } from "@/lib/calculator"
 
 import {
   CategoryRule,
@@ -47,15 +48,46 @@ export function AddTransactionDrawer({
   accounts,
   categoryGroups,
   merchants,
+  initialOpen = false,
+  shortcutTarget = false,
+  hideTrigger = false,
 }: {
   onAdd: (transaction: Omit<Transaction, "id">) => void
   rules: CategoryRule[]
   accounts: TransactionAccountOption[]
   categoryGroups: CategoryGroup[]
   merchants: string[]
+  initialOpen?: boolean
+  shortcutTarget?: boolean
+  hideTrigger?: boolean
 }) {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(initialOpen)
   const [form, setForm] = React.useState<TransactionFormValue>(() => emptyForm(accounts))
+  const formRef = React.useRef<HTMLFormElement>(null)
+
+  React.useEffect(() => {
+    if (!shortcutTarget) return
+    function openDrawer() {
+      setOpen(true)
+    }
+    window.addEventListener("zent:add-transaction", openDrawer)
+    return () => window.removeEventListener("zent:add-transaction", openDrawer)
+  }, [shortcutTarget])
+
+  React.useEffect(() => {
+    if (initialOpen) setOpen(true)
+  }, [initialOpen])
+
+  React.useEffect(() => {
+    if (!open) return
+    function handleKeyDown(event: KeyboardEvent) {
+      if (!(event.metaKey || event.ctrlKey) || event.key !== "Enter") return
+      event.preventDefault()
+      formRef.current?.requestSubmit()
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [open])
 
   function handleChange(patch: Partial<TransactionFormValue>) {
     setForm((f) => ({ ...f, ...patch }))
@@ -64,8 +96,8 @@ export function AddTransactionDrawer({
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
 
-    const amount = Number.parseFloat(form.amount)
-    if (!form.description.trim() || Number.isNaN(amount) || amount <= 0) {
+    const amount = calculateExpression(form.amount)
+    if (!form.description.trim() || amount === null || amount <= 0) {
       return
     }
 
@@ -101,17 +133,19 @@ export function AddTransactionDrawer({
         if (!next) setForm(emptyForm(accounts))
       }}
     >
-      <DrawerTrigger render={<Button size="sm" className="order-first w-full sm:order-none sm:w-auto" />}>
-        <Plus />
-        Add transaction
-      </DrawerTrigger>
+      {!hideTrigger && (
+        <DrawerTrigger render={<Button size="sm" className="order-first w-full sm:order-none sm:w-auto" />}>
+          <Plus />
+          Add transaction
+        </DrawerTrigger>
+      )}
       <DrawerContent>
-        <form onSubmit={handleSubmit} className="flex h-full flex-col">
+        <form ref={formRef} onSubmit={handleSubmit} className="flex h-full flex-col">
           <DrawerHeader>
             <DrawerTitle>Add transaction</DrawerTitle>
             <DrawerDescription>
               Record a new income or expense, or log cash and other
-              untracked activity.
+              untracked activity. Press Ctrl/Cmd + Enter to save.
             </DrawerDescription>
           </DrawerHeader>
           <div className="flex flex-col gap-4 overflow-y-auto p-4">

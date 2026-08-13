@@ -7,11 +7,16 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
+import { PrivacyToggle } from "@/components/privacy-toggle";
 import { AccountsPageContent } from "@/components/accounts/accounts-page-content";
 import { getAccounts } from "@/lib/data/accounts";
+import { getTransactions } from "@/lib/data/transactions";
 
 export default async function AccountsPage() {
-  const accounts = await getAccounts();
+  const [accounts, transactions] = await Promise.all([
+    getAccounts(),
+    getTransactions(),
+  ]);
 
   return (
     <>
@@ -25,7 +30,8 @@ export default async function AccountsPage() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1">
+          <PrivacyToggle />
           <ModeToggle />
         </div>
       </header>
@@ -36,7 +42,7 @@ export default async function AccountsPage() {
             Track connected accounts and manually valued assets in one place.
           </p>
         </div>
-        <AccountsPageContent accounts={accounts} />
+        <AccountsPageContent accounts={accounts} transactions={transactions} />
       </div>
     </>
   );
