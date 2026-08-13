@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export function DateRangeFilter({
   value,
@@ -16,6 +17,7 @@ export function DateRangeFilter({
   value: DateRange | undefined
   onChange: (range: DateRange | undefined) => void
 }) {
+  const isMobile = useIsMobile()
   return (
     <Popover>
       <PopoverTrigger
@@ -48,8 +50,8 @@ export function DateRangeFilter({
           mode="range"
           selected={value}
           onSelect={onChange}
-          numberOfMonths={2}
-          autoFocus
+          numberOfMonths={isMobile ? 1 : 2}
+          autoFocus={!isMobile}
         />
         {value?.from && (
           <div className="flex justify-end border-t p-2">

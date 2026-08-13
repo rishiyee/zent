@@ -4,6 +4,7 @@ import * as React from "react"
 import { format } from "date-fns"
 import { Plus } from "lucide-react"
 import { calculateExpression } from "@/lib/calculator"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 import {
   CategoryRule,
@@ -62,6 +63,7 @@ export function AddTransactionDrawer({
   hideTrigger?: boolean
 }) {
   const [open, setOpen] = React.useState(initialOpen)
+  const isMobile = useIsMobile()
   const [form, setForm] = React.useState<TransactionFormValue>(() => emptyForm(accounts))
   const formRef = React.useRef<HTMLFormElement>(null)
 
@@ -73,10 +75,6 @@ export function AddTransactionDrawer({
     window.addEventListener("zent:add-transaction", openDrawer)
     return () => window.removeEventListener("zent:add-transaction", openDrawer)
   }, [shortcutTarget])
-
-  React.useEffect(() => {
-    if (initialOpen) setOpen(true)
-  }, [initialOpen])
 
   React.useEffect(() => {
     if (!open) return
@@ -127,7 +125,8 @@ export function AddTransactionDrawer({
   return (
     <Drawer
       open={open}
-      swipeDirection="right"
+      swipeDirection={isMobile ? "down" : "right"}
+      showSwipeHandle={isMobile}
       onOpenChange={(next) => {
         setOpen(next)
         if (!next) setForm(emptyForm(accounts))

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Wand2 } from "lucide-react"
+import { ListFilter, Wand2 } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 
 import {
@@ -29,6 +29,16 @@ import { BulkImportWizard } from "@/components/transactions/bulk-import-wizard"
 import { DateRangeFilter } from "@/components/transactions/date-range-filter"
 import { FacetedFilter } from "@/components/transactions/faceted-filter"
 import { LedgerSort } from "@/components/transactions/ledger-table"
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 
 export type LedgerFilters = {
   search: string
@@ -108,49 +118,46 @@ export function LedgerToolbar({
     filters.amount.min !== "" ||
     filters.amount.max !== ""
 
+  const activeFilterCount =
+    filters.statuses.length +
+    filters.categories.length +
+    filters.accountIds.length +
+    (filters.dateRange?.from ? 1 : 0) +
+    (filters.amount.min !== "" || filters.amount.max !== "" ? 1 : 0)
+
+  const filterControls = (
+    <>
+      <FacetedFilter title="Status" options={statusOptions} selected={filters.statuses} onChange={(values) => onFiltersChange({ ...filters, statuses: values as TransactionStatus[] })} />
+      <FacetedFilter title="Category" options={categoryOptions} selected={filters.categories} onChange={(values) => onFiltersChange({ ...filters, categories: values })} />
+      <FacetedFilter title="Account" options={accountOptions} selected={filters.accountIds} onChange={(values) => onFiltersChange({ ...filters, accountIds: values })} />
+      <DateRangeFilter value={filters.dateRange} onChange={(range) => onFiltersChange({ ...filters, dateRange: range })} />
+      <AmountRangeFilter value={filters.amount} onChange={(amount) => onFiltersChange({ ...filters, amount })} />
+    </>
+  )
+
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="grid gap-3 sm:hidden">
         <Input
           placeholder="Search payee or notes..."
           value={filters.search}
           onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
-          className="h-8 w-full sm:w-56"
+          className="w-full"
         />
-        <FacetedFilter
-          title="Status"
-          options={statusOptions}
-          selected={filters.statuses}
-          onChange={(values) =>
-            onFiltersChange({ ...filters, statuses: values as TransactionStatus[] })
-          }
-        />
-        <FacetedFilter
-          title="Category"
-          options={categoryOptions}
-          selected={filters.categories}
-          onChange={(values) => onFiltersChange({ ...filters, categories: values })}
-        />
-        <FacetedFilter
-          title="Account"
-          options={accountOptions}
-          selected={filters.accountIds}
-          onChange={(values) => onFiltersChange({ ...filters, accountIds: values })}
-        />
-        <DateRangeFilter
-          value={filters.dateRange}
-          onChange={(range) => onFiltersChange({ ...filters, dateRange: range })}
-        />
-        <AmountRangeFilter
-          value={filters.amount}
-          onChange={(amount) => onFiltersChange({ ...filters, amount })}
-        />
-        {isFiltered && (
-          <Button variant="ghost" size="sm" onClick={() => onFiltersChange(emptyLedgerFilters())}>
-            Reset filters
-          </Button>
-        )}
-        <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
+        <div className="grid grid-cols-2 gap-2">
+          <Drawer showSwipeHandle>
+            <DrawerTrigger render={<Button variant="outline" className="w-full" />}>
+              <ListFilter /> Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+            </DrawerTrigger>
+            <DrawerContent>
+              <DrawerHeader className="border-b text-left"><DrawerTitle>Filter transactions</DrawerTitle><DrawerDescription>Narrow the list by status, category, account, date, or amount.</DrawerDescription></DrawerHeader>
+              <div className="grid grid-cols-2 gap-2 overflow-y-auto p-4 [&_[data-slot=button]]:w-full">{filterControls}</div>
+              <DrawerFooter>
+                {isFiltered && <Button variant="ghost" onClick={() => onFiltersChange(emptyLedgerFilters())}>Clear all filters</Button>}
+                <DrawerClose render={<Button />}>Show results</DrawerClose>
+              </DrawerFooter>
+            </DrawerContent>
+          </Drawer>
           <Select
             items={{
               "date-desc": "Newest first",
@@ -160,7 +167,7 @@ export function LedgerToolbar({
             value={sort}
             onValueChange={(v) => v && onSortChange(v as LedgerSort)}
           >
-            <SelectTrigger size="sm" className="min-w-0 flex-1 sm:w-44 sm:flex-none">
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -169,10 +176,13 @@ export function LedgerToolbar({
               <SelectItem value="amount-asc">Amount: low to high</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+        <AddTransactionDrawer initialOpen={initialAddOpen} onAdd={onAdd} rules={rules} accounts={accounts} categoryGroups={categoryGroups} merchants={merchants} />
+        <div className="grid grid-cols-2 gap-2">
           <Button
             variant="outline"
-            size="sm"
             nativeButton={false}
+            className="w-full"
             render={<Link href="/settings/rules" />}
           >
             <Wand2 />
@@ -184,14 +194,17 @@ export function LedgerToolbar({
             rules={rules}
             transactions={transactions}
           />
-          <AddTransactionDrawer
-            initialOpen={initialAddOpen}
-            onAdd={onAdd}
-            rules={rules}
-            accounts={accounts}
-            categoryGroups={categoryGroups}
-            merchants={merchants}
-          />
+        </div>
+      </div>
+      <div className="hidden flex-wrap items-center gap-2 sm:flex">
+        <Input placeholder="Search payee or notes..." value={filters.search} onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })} className="h-8 w-56" />
+        {filterControls}
+        {isFiltered && <Button variant="ghost" size="sm" onClick={() => onFiltersChange(emptyLedgerFilters())}>Reset filters</Button>}
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <Select items={{ "date-desc": "Newest first", "amount-desc": "Amount: high to low", "amount-asc": "Amount: low to high" }} value={sort} onValueChange={(v) => v && onSortChange(v as LedgerSort)}><SelectTrigger size="sm" className="w-44"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="date-desc">Newest first</SelectItem><SelectItem value="amount-desc">Amount: high to low</SelectItem><SelectItem value="amount-asc">Amount: low to high</SelectItem></SelectContent></Select>
+          <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/settings/rules" />}><Wand2 />Rules</Button>
+          <BulkImportWizard accounts={accounts} categoryGroups={categoryGroups} rules={rules} transactions={transactions} />
+          <AddTransactionDrawer initialOpen={initialAddOpen} onAdd={onAdd} rules={rules} accounts={accounts} categoryGroups={categoryGroups} merchants={merchants} />
         </div>
       </div>
       {selectedCount > 0 && (

@@ -2,7 +2,8 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { ArrowDownRight, ArrowUpRight, Building2, CalendarClock, Check, MoreHorizontal, Pencil, Plus, Search, Sparkles } from "lucide-react"
+import { format as formatDate } from "date-fns"
+import { ArrowDownRight, ArrowUpRight, Building2, CalendarClock, CalendarIcon, Check, MoreHorizontal, Pencil, Plus, Search, Sparkles } from "lucide-react"
 
 import { renameMerchant } from "@/app/(dashboard)/settings/merchants/actions"
 import {
@@ -24,19 +25,21 @@ import {
 } from "@/lib/recurring"
 import { accountName, transactionAccountOptions, UNCATEGORIZED } from "@/lib/transactions"
 import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { useCurrency } from "@/components/currency-provider"
 import { CategorySelect } from "@/components/transactions/category-select"
 import { PayeeCombobox } from "@/components/transactions/payee-combobox"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog"
+import { Calendar } from "@/components/ui/calendar"
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -77,6 +80,7 @@ function ScheduleEditor({
   onSaved: () => void
 }) {
   const [pending, setPending] = React.useState(false)
+  const isMobile = useIsMobile()
   const { format } = useCurrency()
   if (!editor) return null
   const value = editor.value
@@ -100,41 +104,42 @@ function ScheduleEditor({
   }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-y-auto p-0 sm:max-h-[90vh] sm:max-w-2xl">
-        <DialogHeader className="border-b p-4 pr-12 sm:p-6 sm:pr-12">
+    <Drawer open swipeDirection={isMobile ? "down" : "right"} showSwipeHandle={isMobile} onOpenChange={(open) => !open && onClose()}>
+      <DrawerContent className="[--drawer-content-width:min(32rem,100vw)]">
+        <DrawerHeader className="border-b p-4 text-left">
           <div className="flex items-start gap-3">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><CalendarClock className="size-5" /></div>
-            <div className="grid gap-1"><DialogTitle>{editor.id ? "Edit recurring transaction" : "Set up recurring transaction"}</DialogTitle><DialogDescription>Automatically create a pending ledger entry on schedule.</DialogDescription></div>
+            <div className="grid gap-1"><DrawerTitle>{editor.id ? "Edit recurring transaction" : "Set up recurring transaction"}</DrawerTitle><DrawerDescription>Automatically create a pending ledger entry on schedule.</DrawerDescription></div>
           </div>
-        </DialogHeader>
-        <form onSubmit={save} className="grid gap-5 px-4 pb-4 sm:px-6 sm:pb-6">
+        </DrawerHeader>
+        <form onSubmit={save} className="flex min-h-0 flex-1 flex-col">
+          <div className="grid gap-6 overflow-y-auto p-4">
           <section className="grid gap-4">
             <div><h3 className="font-medium">Transaction details</h3><p className="text-xs text-muted-foreground">Choose what appears in your ledger.</p></div>
             <div className="grid gap-2"><Label htmlFor="recurring-merchant">Payee / description</Label><PayeeCombobox id="recurring-merchant" placeholder="e.g. Netflix or Monthly salary" value={value.merchantName} onChange={(merchantName) => patch({ merchantName })} merchants={merchants} /></div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="grid gap-2"><Label>Type</Label><Select items={{ expense: "Expense", income: "Income" }} value={value.transactionType} onValueChange={(v) => v && patch({ transactionType: v as "income" | "expense", category: null })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="expense">Expense</SelectItem><SelectItem value="income">Income</SelectItem></SelectContent></Select></div>
+            <div className="grid gap-2"><Label>Type</Label><Select items={{ expense: "Expense", income: "Income" }} value={value.transactionType} onValueChange={(v) => v && patch({ transactionType: v as "income" | "expense", category: null })}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="expense">Expense</SelectItem><SelectItem value="income">Income</SelectItem></SelectContent></Select></div>
             <div className="grid gap-2"><Label htmlFor="recurring-amount">Amount</Label><Input id="recurring-amount" type="number" min="0.01" step="0.01" value={value.amount || ""} onChange={(e) => patch({ amount: Number(e.target.value) })} required /></div>
           </div>
-          <div className="grid gap-2"><Label>Account</Label><Select items={Object.fromEntries(transactionAccountOptions(accounts).map((a) => [a.id, a.name]))} value={value.accountId} onValueChange={(v) => v && patch({ accountId: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{transactionAccountOptions(accounts).map((account) => <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>)}</SelectContent></Select></div>
-          <div className="grid gap-2"><Label>Category</Label><CategorySelect groups={groups} value={value.category ?? UNCATEGORIZED} onValueChange={(v) => patch({ category: v === UNCATEGORIZED ? null : v })} leadingOptions={[{ value: UNCATEGORIZED, label: "Uncategorized" }]} /></div>
+          <div className="grid gap-4 sm:grid-cols-2"><div className="grid gap-2"><Label>Account</Label><Select items={Object.fromEntries(transactionAccountOptions(accounts).map((a) => [a.id, a.name]))} value={value.accountId} onValueChange={(v) => v && patch({ accountId: v })}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent>{transactionAccountOptions(accounts).map((account) => <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>)}</SelectContent></Select></div><div className="grid gap-2"><Label>Category</Label><CategorySelect className="w-full" groups={groups} value={value.category ?? UNCATEGORIZED} onValueChange={(v) => patch({ category: v === UNCATEGORIZED ? null : v })} leadingOptions={[{ value: UNCATEGORIZED, label: "Uncategorized" }]} /></div></div>
           </section>
           <div className="h-px bg-border" />
           <section className="grid gap-4">
             <div><h3 className="font-medium">Schedule</h3><p className="text-xs text-muted-foreground">Choose when this transaction should recur.</p></div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="grid gap-2"><Label>Repeats</Label><Select items={cadenceLabels} value={value.cadence} onValueChange={(v) => v && patch({ cadence: v as RecurringCadence })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(cadenceLabels).map(([key, label]) => <SelectItem key={key} value={key}>{label}</SelectItem>)}</SelectContent></Select></div>
-            <div className="grid gap-2"><Label htmlFor="recurring-next">Next date</Label><Input id="recurring-next" type="date" value={value.nextDate} onChange={(e) => patch({ nextDate: e.target.value })} required /></div>
+            <div className="grid gap-2"><Label>Repeats</Label><Select items={cadenceLabels} value={value.cadence} onValueChange={(v) => v && patch({ cadence: v as RecurringCadence })}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(cadenceLabels).map(([key, label]) => <SelectItem key={key} value={key}>{label}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2"><Label htmlFor="recurring-next">Next date</Label><Popover><PopoverTrigger render={<Button id="recurring-next" type="button" variant="outline" className="w-full justify-start font-normal" />}><CalendarIcon />{formatDate(new Date(`${value.nextDate}T12:00:00`), "PPP")}</PopoverTrigger><PopoverContent className="w-auto p-0" align="end"><Calendar mode="single" selected={new Date(`${value.nextDate}T12:00:00`)} onSelect={(date) => date && patch({ nextDate: formatDate(date, "yyyy-MM-dd") })} autoFocus={!isMobile} /></PopoverContent></Popover></div>
           </div>
           </section>
           {value.amount > 0 && value.nextDate && <div className="flex items-start gap-3 rounded-xl border bg-muted/40 p-4"><div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"><Check className="size-4" /></div><div className="min-w-0"><p className="text-sm font-medium">Next transaction</p><p className="mt-0.5 text-sm leading-relaxed text-muted-foreground"><span className="font-medium text-foreground">{format(value.amount)}</span> for {value.merchantName || "this payee"} on {dateFormatter.format(new Date(`${value.nextDate}T12:00:00`))}. Repeats {cadenceLabels[value.cadence].toLowerCase()}.</p></div></div>}
-          <DialogFooter className="-mx-4 -mb-4 sm:-mx-6 sm:-mb-6">
-            <DialogClose render={<Button type="button" variant="outline" />}>Cancel</DialogClose>
+          </div>
+          <DrawerFooter className="border-t bg-background p-4">
             <Button type="submit" disabled={pending || !value.merchantName.trim() || value.amount <= 0}>{pending ? "Saving…" : "Save schedule"}</Button>
-          </DialogFooter>
+            <DrawerClose render={<Button type="button" variant="outline" />}>Cancel</DrawerClose>
+          </DrawerFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   )
 }
 
