@@ -215,7 +215,7 @@ export function CreditCardsView({
       </div>
 
       <div>
-        <div className="mb-2 flex items-start justify-between gap-4">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-lg font-medium">Credit cards</h2>
             <p className="text-sm text-muted-foreground">
@@ -241,7 +241,7 @@ export function CreditCardsView({
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") setDetailId(card.id)
                   }}
-                  className="flex cursor-pointer items-center gap-4 rounded-lg border p-4 text-left hover:bg-muted/50"
+                  className="grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border p-3 text-left hover:bg-muted/50 sm:flex sm:gap-4 sm:p-4"
                 >
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
                     <CreditCardIcon className="size-4 text-muted-foreground" />
@@ -258,7 +258,7 @@ export function CreditCardsView({
                       of {format(card.creditLimit)}
                     </span>
                   </div>
-                  <div className="flex w-36 flex-col items-end gap-1">
+                  <div className="col-span-2 col-start-2 flex flex-row items-center justify-between gap-2 sm:col-auto sm:w-36 sm:flex-col sm:items-end">
                     <Badge variant="outline" className={dueStatusMeta[status].className}>
                       {dueStatusMeta[status].label}
                     </Badge>
@@ -269,6 +269,7 @@ export function CreditCardsView({
                   <Button
                     variant="outline"
                     size="sm"
+                    className="col-start-3 row-start-2 sm:col-auto sm:row-auto"
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation()

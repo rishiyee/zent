@@ -128,3 +128,14 @@
     @apply font-sans overflow-x-hidden;
   }
 }
+
+@media (max-width: 639px) {
+  [data-slot="button"] {
+    min-height: 2.5rem;
+  }
+
+  [data-slot="input"],
+  [data-slot="select-trigger"] {
+    min-height: 2.5rem;
+  }
+}

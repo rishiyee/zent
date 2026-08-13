@@ -184,8 +184,8 @@ export function RulesView({
   }
 
   return (
-    <div className="flex w-full flex-col gap-4 rounded-xl border p-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="flex w-full min-w-0 flex-col gap-4 rounded-xl border p-4 sm:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <h2 className="text-lg font-semibold">Rules</h2>
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button variant="outline" size="sm" />}>

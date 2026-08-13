@@ -38,18 +38,18 @@ function SettingsLinkGroup({
   pathname: string
 }) {
   return (
-    <div className="rounded-xl border">
-      <div className="border-b px-4 py-3">
+    <div className="shrink-0 rounded-xl border max-lg:contents">
+      <div className="border-b px-4 py-3 max-lg:hidden">
         <h2 className="font-semibold">{title}</h2>
       </div>
-      <nav className="flex flex-col gap-0.5 p-2">
+      <nav className="flex flex-col gap-0.5 p-2 max-lg:flex-row max-lg:p-0">
         {links.map((link) => (
           <Link
             key={link.title}
             href={link.url}
             replace
             className={cn(
-              "rounded-md px-2.5 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground",
+              "shrink-0 rounded-md px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground",
               pathname === link.url && "bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
             )}
           >
@@ -65,15 +65,15 @@ export function SettingsNav() {
   const pathname = usePathname()
 
   return (
-    <div className="flex w-full max-w-56 shrink-0 flex-col gap-6">
+    <div className="flex w-full max-w-56 shrink-0 flex-col gap-6 max-lg:max-w-none max-lg:flex-row max-lg:overflow-x-auto max-lg:rounded-xl max-lg:border max-lg:p-2">
       <SettingsLinkGroup title="Account" links={accountLinks} pathname={pathname} />
       <SettingsLinkGroup title="Household" links={householdLinks} pathname={pathname} />
-      <div className="rounded-xl border">
-        <nav className="flex flex-col gap-0.5 p-2">
+      <div className="shrink-0 rounded-xl border max-lg:contents">
+        <nav className="flex flex-col gap-0.5 p-2 max-lg:flex-row max-lg:p-0">
           <button
             type="button"
             onClick={() => logout()}
-            className="flex items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-destructive hover:bg-destructive/10"
+            className="flex shrink-0 items-center gap-2 rounded-md px-3 py-2.5 text-left text-sm text-destructive hover:bg-destructive/10"
           >
             <LogOut className="size-4" />
             Log out

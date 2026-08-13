@@ -160,7 +160,7 @@ export function LedgerToolbar({
             value={sort}
             onValueChange={(v) => v && onSortChange(v as LedgerSort)}
           >
-            <SelectTrigger size="sm" className="w-44">
+            <SelectTrigger size="sm" className="min-w-0 flex-1 sm:w-44 sm:flex-none">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

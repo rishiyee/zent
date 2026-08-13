@@ -82,7 +82,7 @@ export function CreditCardFormFields({
           autoFocus
         />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <Label htmlFor="cc-balance">Amount currently owed</Label>
           <Input
@@ -134,7 +134,7 @@ export function CreditCardFormFields({
           </span>
         </div>
       )}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <Label htmlFor="cc-statement-day">Statement closes on</Label>
           <Select
@@ -177,7 +177,7 @@ export function CreditCardFormFields({
       <p className="text-xs text-muted-foreground">
         Day of the month (1st–28th) your statement closes and your payment is due — each recurs monthly.
       </p>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <Label>Minimum payment</Label>
           <Select

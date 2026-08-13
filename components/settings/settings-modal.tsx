@@ -15,7 +15,7 @@ export function SettingsModal({ children }: { children: React.ReactNode }) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && router.back()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
+      <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-y-auto p-4 sm:max-h-[90vh] sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>

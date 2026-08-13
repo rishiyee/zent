@@ -40,14 +40,14 @@ export function AccountsView({
   const [transferOpen, setTransferOpen] = React.useState(false)
   return (
     <div>
-      <div className="mb-2 flex items-start justify-between gap-4">
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-lg font-medium">Accounts</h2>
           <p className="text-sm text-muted-foreground">
             Connected accounts and manually tracked assets.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
           <Button
             variant="outline"
             size="sm"
@@ -71,10 +71,10 @@ export function AccountsView({
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Source</TableHead>
-              <TableHead>Last Updated</TableHead>
+              <TableHead className="hidden sm:table-cell">Category</TableHead>
+              <TableHead className="hidden md:table-cell">Type</TableHead>
+              <TableHead className="hidden lg:table-cell">Source</TableHead>
+              <TableHead className="hidden xl:table-cell">Last Updated</TableHead>
               <TableHead className="text-right">Balance</TableHead>
             </TableRow>
           </TableHeader>
@@ -91,12 +91,12 @@ export function AccountsView({
                     <TableCell className="font-medium">
                       {account.name}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <Badge variant="secondary" className="font-normal">
                         {meta.label}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <Badge
                         variant="outline"
                         className={
@@ -108,10 +108,10 @@ export function AccountsView({
                         {meta.kind === "liability" ? "Liability" : "Asset"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground capitalize">
+                    <TableCell className="hidden text-muted-foreground capitalize lg:table-cell">
                       {account.source}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="hidden text-muted-foreground xl:table-cell">
                       {dateFormatter.format(new Date(account.lastUpdated))}
                     </TableCell>
                     <TableCell

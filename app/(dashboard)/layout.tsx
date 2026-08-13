@@ -54,7 +54,7 @@ export default async function DashboardLayout({
             avatarUrl: user.user_metadata?.avatar_url as string | undefined,
           }}
         />
-        <SidebarInset>{children}</SidebarInset>
+        <SidebarInset className="min-w-0">{children}</SidebarInset>
         {settingsModal}
       </SidebarProvider>
     </CurrencyProvider>

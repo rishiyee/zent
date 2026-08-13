@@ -112,9 +112,9 @@ export function LedgerTable({
               />
             </TableHead>
             <TableHead>Payee</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Account</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead className="hidden sm:table-cell">Category</TableHead>
+            <TableHead className="hidden lg:table-cell">Account</TableHead>
+            <TableHead className="hidden md:table-cell">Status</TableHead>
             <TableHead className="text-right">Amount</TableHead>
             <TableHead className="w-10" />
           </TableRow>
@@ -123,7 +123,7 @@ export function LedgerTable({
           {groups.length ? (
             groups.flatMap((group) => [
               <TableRow key={`group-${group.date}`} className="bg-muted/40 hover:bg-muted/40">
-                <TableCell colSpan={5} className="py-1.5 text-xs font-medium text-muted-foreground">
+                  <TableCell colSpan={5} className="py-1.5 text-xs font-medium text-muted-foreground">
                   {formatGroupLabel(group.date)}
                 </TableCell>
                 <TableCell
@@ -152,7 +152,7 @@ export function LedgerTable({
                       aria-label={`Select ${txn.description}`}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <div className="flex flex-col">
                       <span className="font-medium">{txn.description}</span>
                       {txn.notes && (
@@ -177,10 +177,10 @@ export function LedgerTable({
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="hidden text-muted-foreground lg:table-cell">
                     {accountName(txn.accountId, accounts)}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <TransactionStatusBadge status={txn.status} />
                   </TableCell>
                   <TableCell

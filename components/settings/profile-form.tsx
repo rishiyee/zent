@@ -172,7 +172,7 @@ export function ProfileForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="min-w-0 flex-1 rounded-xl border p-6">
+    <form onSubmit={handleSubmit} className="min-w-0 flex-1 rounded-xl border p-4 sm:p-6">
       <h2 className="mb-6 text-lg font-semibold">Profile</h2>
       <FieldGroup>
         <div className="flex items-center gap-4">

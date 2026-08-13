@@ -184,7 +184,7 @@ export function TransactionsPageContent({
     <>
       <SummaryCards transactions={filtered} accounts={accounts} />
       <div>
-        <div className="mb-3 flex items-start justify-between gap-4">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-lg font-medium">All transactions</h2>
             <p className="text-sm text-muted-foreground">
