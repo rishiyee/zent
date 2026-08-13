@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   ArrowLeftRight,
+  CalendarClock,
   CreditCard,
   LayoutDashboard,
   PieChart,
@@ -42,6 +43,7 @@ const nav = {
     { title: "Categories", url: "/categories", icon: Tags },
   ],
   planning: [
+    { title: "Recurring", url: "/recurring", icon: CalendarClock },
     { title: "Budgets", url: "#", icon: PieChart },
     { title: "Savings Goals", url: "#", icon: PiggyBank },
     { title: "Invoices", url: "#", icon: Receipt },

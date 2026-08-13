@@ -17,6 +17,8 @@ export type Transaction = {
   tagIds: string[]
   linkedPaymentId?: string | null
   transferToAccountId: string | null
+  recurringScheduleId?: string | null
+  recurringOccurrenceDate?: string | null
 }
 
 export type CategoryRule = {

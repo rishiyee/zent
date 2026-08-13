@@ -15,6 +15,8 @@ type TransactionRow = {
   goal_id: string | null
   transaction_tags: { tag_id: string }[] | null
   transfer_to_account_id: string | null
+  recurring_schedule_id: string | null
+  recurring_occurrence_date: string | null
 }
 
 function toTransaction(row: TransactionRow): Transaction {
@@ -34,6 +36,8 @@ function toTransaction(row: TransactionRow): Transaction {
     linkedPaymentId:
       row.category === "Credit card payment" ? "credit-card-payment" : null,
     transferToAccountId: row.transfer_to_account_id,
+    recurringScheduleId: row.recurring_schedule_id,
+    recurringOccurrenceDate: row.recurring_occurrence_date,
   }
 }
 

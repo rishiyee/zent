@@ -4,6 +4,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { CurrencyProvider } from "@/components/currency-provider";
 import { GlobalShortcuts } from "@/components/global-shortcuts";
 import { GlobalAddTransaction } from "@/components/global-add-transaction";
+import { RecurringMaterializer } from "@/components/recurring-materializer";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { getAccounts } from "@/lib/data/accounts";
@@ -38,6 +39,7 @@ export default async function DashboardLayout({
       region={user.user_metadata?.region as string | undefined}
     >
       <GlobalShortcuts />
+      <RecurringMaterializer />
       <GlobalAddTransaction
         accounts={accounts}
         categoryGroups={categoryGroups}
