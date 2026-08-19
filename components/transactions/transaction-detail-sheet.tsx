@@ -1,6 +1,8 @@
 "use client"
 
-import { CheckCircle2, Pencil, Trash2 } from "lucide-react"
+import * as React from "react"
+
+import { Check, CheckCircle2, LoaderCircle, Pencil, Trash2 } from "lucide-react"
 
 import { Transaction, TransactionAccountOption, accountName } from "@/lib/transactions"
 import { useCurrency } from "@/components/currency-provider"
@@ -53,10 +55,23 @@ export function TransactionDetailSheet({
   onOpenChange: (open: boolean) => void
   onEdit: (transaction: Transaction) => void
   onDelete: (id: string) => void
-  onMarkReviewed: (id: string) => void
+  onMarkReviewed: (id: string) => Promise<void>
   accounts: TransactionAccountOption[]
 }) {
   const { format } = useCurrency()
+  const [reviewState, setReviewState] = React.useState<"idle" | "loading" | "success">("idle")
+
+  async function markReviewed() {
+    if (!transaction || reviewState !== "idle") return
+    setReviewState("loading")
+    try {
+      await onMarkReviewed(transaction.id)
+      setReviewState("success")
+      window.setTimeout(() => setReviewState("idle"), 1200)
+    } catch {
+      setReviewState("idle")
+    }
+  }
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
@@ -115,13 +130,16 @@ export function TransactionDetailSheet({
               )}
             </div>
             <SheetFooter>
-              {transaction.status !== "reviewed" && (
+              {(transaction.status !== "reviewed" || reviewState !== "idle") && (
                 <Button
-                  variant="outline"
-                  onClick={() => onMarkReviewed(transaction.id)}
+                  variant={reviewState === "success" ? "secondary" : "outline"}
+                  className={reviewState === "success" ? "text-emerald-600 motion-safe:animate-in motion-safe:zoom-in-95" : undefined}
+                  disabled={reviewState !== "idle"}
+                  onClick={() => void markReviewed()}
+                  aria-live="polite"
                 >
-                  <CheckCircle2 />
-                  Mark as reviewed
+                  {reviewState === "loading" ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : reviewState === "success" ? <Check aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
+                  {reviewState === "loading" ? "Marking as reviewed…" : reviewState === "success" ? "Reviewed" : "Mark as reviewed"}
                 </Button>
               )}
               {!transaction.linkedPaymentId && <Button onClick={() => onEdit(transaction)}>

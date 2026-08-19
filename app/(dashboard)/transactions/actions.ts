@@ -206,11 +206,12 @@ export async function deleteTransaction(id: string) {
 
 export async function bulkUpdateTransactions(
   ids: string[],
-  patch: Partial<Pick<Transaction, "category" | "status" | "accountId">>
+  patch: Partial<Pick<Transaction, "description" | "category" | "status" | "accountId">>
 ) {
   const supabase = await createClient()
 
   const dbPatch: Record<string, unknown> = {}
+  if (patch.description !== undefined) dbPatch.description = patch.description.trim()
   if (patch.category !== undefined) dbPatch.category = patch.category
   if (patch.status !== undefined) dbPatch.status = patch.status
   if (patch.accountId !== undefined) dbPatch.account_id = toDbAccountId(patch.accountId)

@@ -18,7 +18,7 @@ import { queryKeys } from "@/lib/query-keys"
 import { Tag } from "@/lib/tags"
 import { CategoryGroup } from "@/lib/categories"
 import { CategoryRule, Transaction, UNCATEGORIZED } from "@/lib/transactions"
-import { notify } from "@/components/ui/toast"
+import { notify, toast } from "@/components/ui/toast"
 import { SummaryCards } from "@/components/transactions/summary-cards"
 import { BulkEditDrawer, BulkEditPatch } from "@/components/transactions/bulk-edit-drawer"
 import { EditTransactionDrawer } from "@/components/transactions/edit-transaction-drawer"
@@ -33,6 +33,10 @@ function matchesFilters(txn: Transaction, filters: LedgerFilters) {
     const q = filters.search.toLowerCase()
     const haystack = `${txn.description} ${txn.notes ?? ""}`.toLowerCase()
     if (!haystack.includes(q)) return false
+  }
+
+  if (filters.payees.length && !filters.payees.includes(txn.description)) {
+    return false
   }
 
   if (filters.statuses.length && !filters.statuses.includes(txn.status)) {
@@ -138,9 +142,11 @@ export function TransactionsPageContent({
   }
 
   function invalidate() {
-    queryClient.invalidateQueries({ queryKey: queryKeys.transactions })
-    queryClient.invalidateQueries({ queryKey: queryKeys.creditCards })
-    queryClient.invalidateQueries({ queryKey: queryKeys.accounts })
+    return Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.creditCards }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts }),
+    ])
   }
 
   function handleDelete(id: string) {
@@ -160,8 +166,18 @@ export function TransactionsPageContent({
     void notify(updateTransaction(id, patch), "Transaction updated").then(invalidate)
   }
 
-  function handleMarkReviewed(id: string) {
-    void notify(updateTransaction(id, { status: "reviewed" })).then(invalidate)
+  async function handleMarkReviewed(id: string) {
+    const previous = queryClient.getQueryData<Transaction[]>(queryKeys.transactions)
+    queryClient.setQueryData<Transaction[]>(queryKeys.transactions, (current) => current?.map((transaction) => transaction.id === id ? { ...transaction, status: "reviewed" } : transaction))
+    try {
+      await updateTransaction(id, { status: "reviewed" })
+      toast.add({ title: "Transaction marked as reviewed", type: "success" })
+      await invalidate()
+    } catch (error) {
+      queryClient.setQueryData(queryKeys.transactions, previous)
+      toast.add({ title: error instanceof Error ? error.message : "Could not mark transaction as reviewed", type: "error" })
+      throw error
+    }
   }
 
   function handleSplit(original: Transaction, splits: Parameters<typeof splitTransaction>[1]) {
@@ -226,6 +242,7 @@ export function TransactionsPageContent({
         </div>
       </div>
       <TransactionDetailSheet
+        key={detailTransaction?.id ?? "closed"}
         transaction={detailTransaction}
         open={!!detailId}
         onOpenChange={(open) => !open && setDetailId(null)}

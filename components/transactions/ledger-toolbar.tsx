@@ -42,6 +42,7 @@ import {
 
 export type LedgerFilters = {
   search: string
+  payees: string[]
   categories: string[]
   statuses: TransactionStatus[]
   accountIds: string[]
@@ -52,6 +53,7 @@ export type LedgerFilters = {
 export function emptyLedgerFilters(): LedgerFilters {
   return {
     search: "",
+    payees: [],
     categories: [],
     statuses: [],
     accountIds: [],
@@ -108,9 +110,14 @@ export function LedgerToolbar({
       label: category,
     })),
   ]
+  const payeeOptions = [...new Set(merchants)].sort((a, b) => a.localeCompare(b)).map((payee) => ({
+    value: payee,
+    label: payee,
+  }))
 
   const isFiltered =
     filters.search !== "" ||
+    filters.payees.length > 0 ||
     filters.categories.length > 0 ||
     filters.statuses.length > 0 ||
     filters.accountIds.length > 0 ||
@@ -119,6 +126,7 @@ export function LedgerToolbar({
     filters.amount.max !== ""
 
   const activeFilterCount =
+    filters.payees.length +
     filters.statuses.length +
     filters.categories.length +
     filters.accountIds.length +
@@ -127,6 +135,7 @@ export function LedgerToolbar({
 
   const filterControls = (
     <>
+      <FacetedFilter title="Payee" options={payeeOptions} selected={filters.payees} onChange={(values) => onFiltersChange({ ...filters, payees: values })} />
       <FacetedFilter title="Status" options={statusOptions} selected={filters.statuses} onChange={(values) => onFiltersChange({ ...filters, statuses: values as TransactionStatus[] })} />
       <FacetedFilter title="Category" options={categoryOptions} selected={filters.categories} onChange={(values) => onFiltersChange({ ...filters, categories: values })} />
       <FacetedFilter title="Account" options={accountOptions} selected={filters.accountIds} onChange={(values) => onFiltersChange({ ...filters, accountIds: values })} />
@@ -150,7 +159,7 @@ export function LedgerToolbar({
               <ListFilter /> Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
             </DrawerTrigger>
             <DrawerContent>
-              <DrawerHeader className="border-b text-left"><DrawerTitle>Filter transactions</DrawerTitle><DrawerDescription>Narrow the list by status, category, account, date, or amount.</DrawerDescription></DrawerHeader>
+              <DrawerHeader className="border-b text-left"><DrawerTitle>Filter transactions</DrawerTitle><DrawerDescription>Narrow the list by payee, status, category, account, date, or amount.</DrawerDescription></DrawerHeader>
               <div className="grid grid-cols-2 gap-2 overflow-y-auto p-4 [&_[data-slot=button]]:w-full">{filterControls}</div>
               <DrawerFooter>
                 {isFiltered && <Button variant="ghost" onClick={() => onFiltersChange(emptyLedgerFilters())}>Clear all filters</Button>}

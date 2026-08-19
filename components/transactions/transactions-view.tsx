@@ -16,7 +16,7 @@ import { Goal } from "@/lib/goals"
 import { queryKeys } from "@/lib/query-keys"
 import { Tag } from "@/lib/tags"
 import { CategoryRule, Transaction } from "@/lib/transactions"
-import { notify } from "@/components/ui/toast"
+import { notify, toast } from "@/components/ui/toast"
 import { AddTransactionDrawer } from "@/components/transactions/add-transaction-drawer"
 import { EditTransactionDrawer } from "@/components/transactions/edit-transaction-drawer"
 import { LedgerTable } from "@/components/transactions/ledger-table"
@@ -59,9 +59,11 @@ export function TransactionsView({
   const splitTransactionRecord = data.find((item) => item.id === splitId) ?? null
 
   function invalidate() {
-    queryClient.invalidateQueries({ queryKey: queryKeys.transactions })
-    queryClient.invalidateQueries({ queryKey: queryKeys.accounts })
-    queryClient.invalidateQueries({ queryKey: queryKeys.creditCards })
+    return Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.creditCards }),
+    ])
   }
 
   function openEdit(transaction: Transaction) {
@@ -86,8 +88,18 @@ export function TransactionsView({
     void notify(updateTransaction(id, patch), "Transaction updated").then(invalidate)
   }
 
-  function handleMarkReviewed(id: string) {
-    void notify(updateTransaction(id, { status: "reviewed" })).then(invalidate)
+  async function handleMarkReviewed(id: string) {
+    const previous = queryClient.getQueryData<Transaction[]>(queryKeys.transactions)
+    queryClient.setQueryData<Transaction[]>(queryKeys.transactions, (current) => current?.map((transaction) => transaction.id === id ? { ...transaction, status: "reviewed" } : transaction))
+    try {
+      await updateTransaction(id, { status: "reviewed" })
+      toast.add({ title: "Transaction marked as reviewed", type: "success" })
+      await invalidate()
+    } catch (error) {
+      queryClient.setQueryData(queryKeys.transactions, previous)
+      toast.add({ title: error instanceof Error ? error.message : "Could not mark transaction as reviewed", type: "error" })
+      throw error
+    }
   }
 
   function handleSplit(original: Transaction, splits: Parameters<typeof splitTransaction>[1]) {
@@ -128,6 +140,7 @@ export function TransactionsView({
         accounts={accounts}
       />
       <TransactionDetailSheet
+        key={detailTransaction?.id ?? "closed"}
         transaction={detailTransaction}
         open={!!detailId}
         onOpenChange={(open) => !open && setDetailId(null)}

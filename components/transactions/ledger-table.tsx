@@ -30,6 +30,13 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TransactionStatusBadge } from "@/components/transactions/transaction-status-badge"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
 
 export type LedgerSort = "date-desc" | "amount-desc" | "amount-asc"
 
@@ -116,6 +123,17 @@ export function LedgerTable({
     )
   }
 
+  function RowContextMenu({ transaction }: { transaction: Transaction }) {
+    return <ContextMenuContent>
+      <ContextMenuItem onClick={() => onRowClick(transaction)}>View details</ContextMenuItem>
+      {!transaction.linkedPaymentId && <ContextMenuItem onClick={() => onEdit(transaction)}>Edit transaction</ContextMenuItem>}
+      {!transaction.linkedPaymentId && !transaction.transferToAccountId && <ContextMenuItem onClick={() => onSplit(transaction)}>Split transaction</ContextMenuItem>}
+      {!transaction.linkedPaymentId && transaction.status !== "reviewed" && <ContextMenuItem onClick={() => onMarkReviewed(transaction.id)}>Mark as reviewed</ContextMenuItem>}
+      {!transaction.linkedPaymentId && <ContextMenuSeparator />}
+      {!transaction.linkedPaymentId && <ContextMenuItem variant="destructive" onClick={() => onDelete(transaction.id)}>Delete transaction</ContextMenuItem>}
+    </ContextMenuContent>
+  }
+
   return (
     <>
       <div className="sm:hidden">
@@ -200,8 +218,9 @@ export function LedgerTable({
                 <TableCell className="py-1.5" />
               </TableRow>,
               ...group.transactions.map((txn) => (
-                <TableRow
-                  key={txn.id}
+                <ContextMenu key={txn.id}>
+                <ContextMenuTrigger
+                  render={<TableRow />}
                   data-state={selected[txn.id] && "selected"}
                   className="cursor-pointer"
                   onClick={() => onRowClick(txn)}
@@ -257,7 +276,9 @@ export function LedgerTable({
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <TransactionActions transaction={txn} />
                   </TableCell>
-                </TableRow>
+                </ContextMenuTrigger>
+                <RowContextMenu transaction={txn} />
+                </ContextMenu>
               )),
             ])
           ) : (
