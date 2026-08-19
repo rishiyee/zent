@@ -11,6 +11,7 @@ import { getAccounts } from "@/lib/data/accounts";
 import { getCategoryGroups } from "@/lib/data/categories";
 import { getMerchants } from "@/lib/data/merchants";
 import { getCategoryRules } from "@/lib/data/transactions";
+import { withDataRetry } from "@/lib/data/with-retry";
 
 export default async function DashboardLayout({
   children,
@@ -27,10 +28,10 @@ export default async function DashboardLayout({
   }
 
   const [accounts, categoryGroups, merchants, rules] = await Promise.all([
-    getAccounts(),
-    getCategoryGroups(),
-    getMerchants(),
-    getCategoryRules(),
+    withDataRetry(getAccounts),
+    withDataRetry(getCategoryGroups),
+    withDataRetry(getMerchants),
+    withDataRetry(getCategoryRules),
   ]);
 
   return (

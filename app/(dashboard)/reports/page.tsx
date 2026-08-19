@@ -12,12 +12,13 @@ import { ReportsView } from "@/components/reports/reports-view"
 import { getTransactions } from "@/lib/data/transactions"
 import { getCategoryGroups } from "@/lib/data/categories"
 import { getAccounts } from "@/lib/data/accounts"
+import { withDataRetry } from "@/lib/data/with-retry"
 
 export default async function ReportsPage() {
   const [transactions, categoryGroups, accounts] = await Promise.all([
-    getTransactions(),
-    getCategoryGroups(),
-    getAccounts(),
+    withDataRetry(getTransactions),
+    withDataRetry(getCategoryGroups),
+    withDataRetry(getAccounts),
   ])
 
   return (

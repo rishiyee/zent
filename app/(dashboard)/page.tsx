@@ -21,6 +21,7 @@ import { getGoals } from "@/lib/data/goals";
 import { getTags } from "@/lib/data/tags";
 import { getCategoryRules, getTransactions } from "@/lib/data/transactions";
 import { createClient } from "@/lib/supabase/server";
+import { withDataRetry } from "@/lib/data/with-retry";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -32,15 +33,15 @@ export default async function DashboardPage() {
 
   const [transactions, accounts, rules, categoryGroups, merchants, goals, tags, creditCards, creditCardPayments] =
     await Promise.all([
-      getTransactions(),
-      getAccounts(),
-      getCategoryRules(),
-      getCategoryGroups(),
-      getMerchants(),
-      getGoals(),
-      getTags(),
-      getCreditCards(),
-      getCreditCardPayments(),
+      withDataRetry(getTransactions),
+      withDataRetry(getAccounts),
+      withDataRetry(getCategoryRules),
+      withDataRetry(getCategoryGroups),
+      withDataRetry(getMerchants),
+      withDataRetry(getGoals),
+      withDataRetry(getTags),
+      withDataRetry(getCreditCards),
+      withDataRetry(getCreditCardPayments),
     ]);
 
   return (

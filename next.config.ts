@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     // Keep recently visited authenticated pages in the browser router cache.
     // Server actions still invalidate affected routes with revalidatePath.
     staleTimes: {
-      dynamic: 30,
+      dynamic: 300,
       static: 300,
     },
   },
