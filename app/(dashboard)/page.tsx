@@ -12,6 +12,7 @@ import { CashFlowChart } from "@/components/transactions/cash-flow-chart";
 import { SummaryCards } from "@/components/transactions/summary-cards";
 import { TransactionsView } from "@/components/transactions/transactions-view";
 import { CreditCardsDueSoonCard } from "@/components/credit-cards/due-soon-card";
+import { GetStartedChecklist } from "@/components/onboarding/get-started-checklist";
 import { getAccounts } from "@/lib/data/accounts";
 import { getCategoryGroups } from "@/lib/data/categories";
 import { getCreditCardPayments, getCreditCards } from "@/lib/data/credit-cards";
@@ -68,6 +69,11 @@ export default async function DashboardPage() {
             Here&apos;s what&apos;s happening with your money today.
           </p>
         </div>
+        <GetStartedChecklist
+          hasAccount={accounts.length > 0}
+          hasTransaction={transactions.length > 0}
+          hasCategorizedTransaction={transactions.some((transaction) => Boolean(transaction.category))}
+        />
         <SummaryCards transactions={transactions} accounts={accounts} />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <CreditCardsDueSoonCard cards={creditCards} payments={creditCardPayments} />
