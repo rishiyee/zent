@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   PieChart,
   ChartNoAxesCombined,
+  TrendingUp,
   PiggyBank,
   Receipt,
   Tags,
@@ -46,6 +47,7 @@ const nav = {
     { title: "Credit Cards", url: "/credit-cards", icon: CreditCard },
     { title: "Categories", url: "/categories", icon: Tags },
     { title: "Reports", url: "/reports", icon: ChartNoAxesCombined },
+    { title: "Investments", url: "/investments", icon: TrendingUp },
   ],
   planning: [
     { title: "Recurring", url: "/recurring", icon: CalendarClock },
