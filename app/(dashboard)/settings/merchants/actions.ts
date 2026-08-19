@@ -39,3 +39,20 @@ export async function renameMerchant(oldName: string, newName: string) {
   revalidatePath("/transactions")
   revalidatePath("/")
 }
+
+export async function hideMerchant(name: string) {
+  const merchantName = name.trim()
+  if (!merchantName) throw new Error("Merchant is required")
+
+  const supabase = await createClient()
+  const { error } = await supabase.from("hidden_merchants").upsert({
+    merchant_key: merchantKey(merchantName),
+    merchant_name: merchantName,
+  })
+  if (error) throw error
+
+  revalidatePath("/", "layout")
+  revalidatePath("/settings/merchants")
+  revalidatePath("/recurring")
+  revalidatePath("/transactions")
+}

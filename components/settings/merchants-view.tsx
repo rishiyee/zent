@@ -3,9 +3,9 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { format as formatDate } from "date-fns"
-import { ArrowDownRight, ArrowUpRight, Building2, CalendarClock, CalendarIcon, Check, MoreHorizontal, Pencil, Plus, Search, Sparkles } from "lucide-react"
+import { ArrowDownRight, ArrowUpRight, Building2, CalendarClock, CalendarIcon, Check, MoreHorizontal, Pencil, Plus, Search, Sparkles, Trash2 } from "lucide-react"
 
-import { renameMerchant } from "@/app/(dashboard)/settings/merchants/actions"
+import { hideMerchant, renameMerchant } from "@/app/(dashboard)/settings/merchants/actions"
 import {
   createRecurringSchedule,
   deleteRecurringSchedule,
@@ -163,6 +163,7 @@ export function MerchantsView({ merchants, accounts, categoryGroups, schedules, 
   const [editor, setEditor] = React.useState<EditorState>(null)
   const [actionPending, setActionPending] = React.useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = React.useState<RecurringSchedule | null>(null)
+  const [merchantDeleteTarget, setMerchantDeleteTarget] = React.useState<Merchant | null>(null)
   const [scheduleQuery, setScheduleQuery] = React.useState("")
   const [scheduleStatus, setScheduleStatus] = React.useState<ScheduleStatusFilter>("all")
 
@@ -251,7 +252,7 @@ export function MerchantsView({ merchants, accounts, categoryGroups, schedules, 
         <div className="divide-y">{filtered.length ? filtered.map((merchant) => {
           const recurring = recurringByMerchant.get(merchant.name.toLowerCase())
           const suggested = suggestedMerchants.has(merchant.name.toLowerCase())
-          return <div key={merchant.name} className="flex items-center gap-3 py-3"><div className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground"><Building2 className="size-4" /></div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="truncate font-medium">{merchant.name}</span>{recurring && <Badge variant={recurring.status === "active" ? "secondary" : "outline"}>{recurring.status === "active" ? "Active" : "Paused"}</Badge>}{!recurring && suggested && <Badge variant="outline">Suggested</Badge>}</div><p className="text-xs text-muted-foreground">{merchant.count} transaction{merchant.count === 1 ? "" : "s"}</p></div><Button variant="outline" size="sm" onClick={() => recurring ? editSchedule(recurring) : createForMerchant(merchant.name)}><CalendarClock />{recurring ? "Manage" : "Recurring"}</Button><Button variant="ghost" size="icon-sm" onClick={() => { setEditing(merchant); setDraft(merchant.name) }}><Pencil /><span className="sr-only">Rename merchant</span></Button></div>
+          return <div key={merchant.name} className="flex items-center gap-3 py-3"><div className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground"><Building2 className="size-4" /></div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="truncate font-medium">{merchant.name}</span>{recurring && <Badge variant={recurring.status === "active" ? "secondary" : "outline"}>{recurring.status === "active" ? "Active" : "Paused"}</Badge>}{!recurring && suggested && <Badge variant="outline">Suggested</Badge>}</div><p className="text-xs text-muted-foreground">{merchant.count} transaction{merchant.count === 1 ? "" : "s"}</p></div><Button variant="outline" size="sm" onClick={() => recurring ? editSchedule(recurring) : createForMerchant(merchant.name)}><CalendarClock />{recurring ? "Manage" : "Recurring"}</Button><Button variant="ghost" size="icon-sm" onClick={() => { setEditing(merchant); setDraft(merchant.name) }}><Pencil /><span className="sr-only">Rename merchant</span></Button><Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => setMerchantDeleteTarget(merchant)}><Trash2 /><span className="sr-only">Remove {merchant.name}</span></Button></div>
         }) : <p className="py-8 text-center text-sm text-muted-foreground">{merchants.length ? "No merchants match your search." : "No transactions yet."}</p>}</div>
       </section>
         </TabsContent>}
@@ -259,6 +260,7 @@ export function MerchantsView({ merchants, accounts, categoryGroups, schedules, 
 
       <ScheduleEditor editor={editor} accounts={accounts} categoryGroups={categoryGroups} merchants={merchants.map((merchant) => merchant.name)} onChange={setEditor} onClose={() => setEditor(null)} onSaved={refresh} />
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete recurring schedule?</AlertDialogTitle><AlertDialogDescription>Future transactions for {deleteTarget?.merchantName} will no longer be created. Transactions already added to your ledger will be kept.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep schedule</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={() => { if (!deleteTarget) return; const target = deleteTarget; setDeleteTarget(null); void run(target.id, deleteRecurringSchedule(target.id), "Schedule deleted") }}>Delete schedule</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+      <AlertDialog open={!!merchantDeleteTarget} onOpenChange={(open) => !open && setMerchantDeleteTarget(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Remove &ldquo;{merchantDeleteTarget?.name}&rdquo;?</AlertDialogTitle><AlertDialogDescription>This merchant will be hidden from merchant lists and payee suggestions. Its {merchantDeleteTarget?.count ?? 0} transaction{merchantDeleteTarget?.count === 1 ? "" : "s"} and any recurring schedules will be preserved.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep merchant</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={() => { if (!merchantDeleteTarget) return; const target = merchantDeleteTarget; setMerchantDeleteTarget(null); void run(`merchant:${target.name}`, hideMerchant(target.name), "Merchant removed") }}>Remove merchant</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
       <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}><DialogContent><DialogHeader><DialogTitle>Edit merchant</DialogTitle><DialogDescription>Renames this payee across its transactions and recurring schedules.</DialogDescription></DialogHeader><form onSubmit={submitRename} className="flex flex-col gap-4"><Input value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus /><DialogFooter><DialogClose render={<Button type="button" variant="outline" />}>Cancel</DialogClose><Button type="submit" disabled={pending || !draft.trim()}>{pending ? "Saving…" : "Save"}</Button></DialogFooter></form></DialogContent></Dialog>
     </div>
   )
