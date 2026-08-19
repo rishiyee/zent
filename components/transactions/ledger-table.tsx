@@ -31,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TransactionStatusBadge } from "@/components/transactions/transaction-status-badge"
+import { DataPagination } from "@/components/ui/data-pagination"
 import {
   ContextMenu,
   ContextMenuContent,
@@ -78,14 +79,19 @@ export function LedgerTable({
   accounts: TransactionAccountOption[]
 }) {
   const { format } = useCurrency()
+  const [page, setPage] = React.useState(0)
+  const [pageSize, setPageSize] = React.useState(25)
+  const pageCount = Math.max(1, Math.ceil(data.length / pageSize))
+  const safePage = Math.min(page, pageCount - 1)
+  const pageData = React.useMemo(() => data.slice(safePage * pageSize, (safePage + 1) * pageSize), [data, pageSize, safePage])
   const groups = React.useMemo(() => {
-    return groupByDate(data).map((group) => ({
+    return groupByDate(pageData).map((group) => ({
       ...group,
       transactions: sortWithinGroup(group.transactions, sort),
     }))
-  }, [data, sort])
+  }, [pageData, sort])
 
-  const allIds = React.useMemo(() => data.map((t) => t.id), [data])
+  const allIds = React.useMemo(() => pageData.map((t) => t.id), [pageData])
   const allSelected = allIds.length > 0 && allIds.every((id) => selected[id])
   const someSelected = allIds.some((id) => selected[id])
 
@@ -292,6 +298,7 @@ export function LedgerTable({
         </TableBody>
       </Table>
       </div>
+      {data.length > 10 && <DataPagination page={safePage} pageSize={pageSize} total={data.length} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(0) }} />}
     </>
   )
 }

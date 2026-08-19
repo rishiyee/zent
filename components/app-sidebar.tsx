@@ -47,7 +47,7 @@ const nav = {
     { title: "Accounts", url: "/accounts", icon: Wallet },
     { title: "Credit Cards", url: "/credit-cards", icon: CreditCard },
     { title: "Categories", url: "/categories", icon: Tags },
-    { title: "Merchants", url: "/settings/merchants", icon: Store },
+    { title: "Merchants", url: "/merchants", icon: Store },
     { title: "Reports", url: "/reports", icon: ChartNoAxesCombined },
     { title: "Investments", url: "/investments", icon: TrendingUp },
   ],

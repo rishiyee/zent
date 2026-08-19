@@ -43,6 +43,7 @@ import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/toast"
+import { DataPagination } from "@/components/ui/data-pagination"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -167,12 +168,17 @@ export function MerchantsView({ merchants, accounts, categoryGroups, schedules, 
   const [merchantDeleteTarget, setMerchantDeleteTarget] = React.useState<Merchant | null>(null)
   const [scheduleQuery, setScheduleQuery] = React.useState("")
   const [scheduleStatus, setScheduleStatus] = React.useState<ScheduleStatusFilter>("all")
+  const [merchantPage, setMerchantPage] = React.useState(0)
+  const [merchantPageSize, setMerchantPageSize] = React.useState(25)
 
   const filtered = React.useMemo(() => {
     const q = search.trim().toLowerCase()
     const list = q ? merchants.filter((m) => m.name.toLowerCase().includes(q)) : merchants
     return [...list].sort((a, b) => sort === "count" ? b.count - a.count : a.name.localeCompare(b.name))
   }, [merchants, search, sort])
+  const merchantPageCount = Math.max(1, Math.ceil(filtered.length / merchantPageSize))
+  const safeMerchantPage = Math.min(merchantPage, merchantPageCount - 1)
+  const visibleMerchants = filtered.slice(safeMerchantPage * merchantPageSize, (safeMerchantPage + 1) * merchantPageSize)
   const recurringByMerchant = React.useMemo(() => new Map(schedules.map((schedule) => [schedule.merchantName.toLowerCase(), schedule])), [schedules])
   const suggestedMerchants = React.useMemo(() => new Set(suggestions.map((suggestion) => suggestion.merchantName.toLowerCase())), [suggestions])
   const activeSchedules = schedules.filter((schedule) => schedule.status === "active")
@@ -250,11 +256,12 @@ export function MerchantsView({ merchants, accounts, categoryGroups, schedules, 
       <section className="rounded-xl border p-5">
         <div><h2 className="text-lg font-semibold">All merchants</h2><p className="mt-1 text-sm text-muted-foreground">Distinct payees from your transaction history.</p></div>
         <div className="my-4 flex flex-wrap items-center gap-2"><Select items={{ count: "Transaction count", name: "Name" }} value={sort} onValueChange={(v) => v && setSort(v as SortKey)}><SelectTrigger className="w-44"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="count">Transaction count</SelectItem><SelectItem value="name">Name</SelectItem></SelectContent></Select><div className="relative ml-auto w-full max-w-64"><Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" /><Input placeholder={`Search ${merchants.length} merchants…`} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8" /></div></div>
-        <div className="divide-y">{filtered.length ? filtered.map((merchant) => {
+        <div className="divide-y">{filtered.length ? visibleMerchants.map((merchant) => {
           const recurring = recurringByMerchant.get(merchant.name.toLowerCase())
           const suggested = suggestedMerchants.has(merchant.name.toLowerCase())
-          return <div key={merchant.name} className="flex items-center gap-3 py-3"><div className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground"><Building2 className="size-4" /></div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Link href={`/settings/merchants/${encodeURIComponent(merchant.name)}`} className="truncate font-medium hover:underline">{merchant.name}</Link>{recurring && <Badge variant={recurring.status === "active" ? "secondary" : "outline"}>{recurring.status === "active" ? "Active" : "Paused"}</Badge>}{!recurring && suggested && <Badge variant="outline">Suggested</Badge>}</div><p className="text-xs text-muted-foreground">{merchant.count} transaction{merchant.count === 1 ? "" : "s"}</p></div><Button variant="ghost" size="sm" render={<Link href={`/settings/merchants/${encodeURIComponent(merchant.name)}`} />}><span className="hidden sm:inline">View</span><ArrowRight /></Button><Button variant="outline" size="sm" onClick={() => recurring ? editSchedule(recurring) : createForMerchant(merchant.name)}><CalendarClock />{recurring ? "Manage" : "Recurring"}</Button><Button variant="ghost" size="icon-sm" onClick={() => { setEditing(merchant); setDraft(merchant.name) }}><Pencil /><span className="sr-only">Rename merchant</span></Button><Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => setMerchantDeleteTarget(merchant)}><Trash2 /><span className="sr-only">Remove {merchant.name}</span></Button></div>
+          return <div key={merchant.name} className="flex items-center gap-3 py-3"><div className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground"><Building2 className="size-4" /></div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Link href={`/merchants/${encodeURIComponent(merchant.name)}`} className="truncate font-medium hover:underline">{merchant.name}</Link>{recurring && <Badge variant={recurring.status === "active" ? "secondary" : "outline"}>{recurring.status === "active" ? "Active" : "Paused"}</Badge>}{!recurring && suggested && <Badge variant="outline">Suggested</Badge>}</div><p className="text-xs text-muted-foreground">{merchant.count} transaction{merchant.count === 1 ? "" : "s"}</p></div><Button variant="ghost" size="sm" render={<Link href={`/merchants/${encodeURIComponent(merchant.name)}`} />}><span className="hidden sm:inline">View</span><ArrowRight /></Button><Button variant="outline" size="sm" onClick={() => recurring ? editSchedule(recurring) : createForMerchant(merchant.name)}><CalendarClock />{recurring ? "Manage" : "Recurring"}</Button><Button variant="ghost" size="icon-sm" onClick={() => { setEditing(merchant); setDraft(merchant.name) }}><Pencil /><span className="sr-only">Rename merchant</span></Button>{merchant.name.toLowerCase() !== "uncategorized" && <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => setMerchantDeleteTarget(merchant)}><Trash2 /><span className="sr-only">Remove {merchant.name}</span></Button>}</div>
         }) : <p className="py-8 text-center text-sm text-muted-foreground">{merchants.length ? "No merchants match your search." : "No transactions yet."}</p>}</div>
+        {filtered.length > 10 && <DataPagination page={safeMerchantPage} pageSize={merchantPageSize} total={filtered.length} onPageChange={setMerchantPage} onPageSizeChange={(size) => { setMerchantPageSize(size); setMerchantPage(0) }} />}
       </section>
         </TabsContent>}
       </Tabs>
