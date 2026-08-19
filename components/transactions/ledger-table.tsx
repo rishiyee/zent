@@ -9,6 +9,7 @@ import {
   TransactionAccountOption,
   accountName,
   groupByDate,
+  transactionPayeeName,
 } from "@/lib/transactions"
 import { useCurrency } from "@/components/currency-provider"
 import { Badge } from "@/components/ui/badge"
@@ -109,7 +110,7 @@ export function LedgerTable({
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
           <MoreHorizontal />
-          <span className="sr-only">Actions for {transaction.description}</span>
+          <span className="sr-only">Actions for {transactionPayeeName(transaction.description)}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onRowClick(transaction)}>View details</DropdownMenuItem>
@@ -155,10 +156,10 @@ export function LedgerTable({
                 <div className="overflow-hidden rounded-xl border bg-card">
                   {group.transactions.map((txn) => (
                     <div key={txn.id} data-state={selected[txn.id] && "selected"} role="button" tabIndex={0} onClick={() => onRowClick(txn)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onRowClick(txn) } }} className="grid min-h-20 cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b px-3 py-3 text-left last:border-b-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring data-[state=selected]:bg-muted/60">
-                      <div onClick={(event) => event.stopPropagation()}><Checkbox checked={!!selected[txn.id]} onCheckedChange={(value) => toggleOne(txn.id, !!value)} aria-label={`Select ${txn.description}`} /></div>
+                      <div onClick={(event) => event.stopPropagation()}><Checkbox checked={!!selected[txn.id]} onCheckedChange={(value) => toggleOne(txn.id, !!value)} aria-label={`Select ${transactionPayeeName(txn.description)}`} /></div>
                       <div className="min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <span className="truncate font-medium">{txn.description}</span>
+                          <span className="truncate font-medium">{transactionPayeeName(txn.description)}</span>
                           <span className={`shrink-0 font-semibold tabular-nums ${txn.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"}`}>{txn.linkedPaymentId ? "" : txn.type === "income" ? "+" : "-"}{format(txn.amount)}</span>
                         </div>
                         <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
@@ -229,12 +230,12 @@ export function LedgerTable({
                     <Checkbox
                       checked={!!selected[txn.id]}
                       onCheckedChange={(value) => toggleOne(txn.id, !!value)}
-                      aria-label={`Select ${txn.description}`}
+                      aria-label={`Select ${transactionPayeeName(txn.description)}`}
                     />
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium">{txn.description}</span>
+                      <span className="font-medium">{transactionPayeeName(txn.description)}</span>
                       {txn.notes && (
                         <span className="line-clamp-1 text-xs text-muted-foreground">
                           {txn.notes}

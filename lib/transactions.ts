@@ -30,6 +30,10 @@ export type CategoryRule = {
 
 export const UNCATEGORIZED = "uncategorized"
 
+export function transactionPayeeName(description: string) {
+  return description.trim() || "Unknown payee"
+}
+
 export const statuses: TransactionStatus[] = [
   "needs-review",
   "pending",

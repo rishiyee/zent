@@ -13,6 +13,7 @@ import {
   TrendingUp,
   PiggyBank,
   Receipt,
+  Store,
   Tags,
   Wallet,
   X,
@@ -46,6 +47,7 @@ const nav = {
     { title: "Accounts", url: "/accounts", icon: Wallet },
     { title: "Credit Cards", url: "/credit-cards", icon: CreditCard },
     { title: "Categories", url: "/categories", icon: Tags },
+    { title: "Merchants", url: "/settings/merchants", icon: Store },
     { title: "Reports", url: "/reports", icon: ChartNoAxesCombined },
     { title: "Investments", url: "/investments", icon: TrendingUp },
   ],
@@ -116,7 +118,7 @@ export function AppSidebar({
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     render={<Link href={item.url} onClick={closeMobileSidebar} />}
-                    isActive={item.url !== "#" && pathname === item.url}
+                    isActive={item.url !== "#" && (pathname === item.url || pathname.startsWith(`${item.url}/`))}
                     tooltip={item.title}
                   >
                     <item.icon />

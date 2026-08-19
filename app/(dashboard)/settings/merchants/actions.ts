@@ -40,15 +40,18 @@ export async function renameMerchant(oldName: string, newName: string) {
   revalidatePath("/")
 }
 
-export async function hideMerchant(name: string) {
+export async function reassignMerchantToUncategorized(name: string) {
   const merchantName = name.trim()
   if (!merchantName) throw new Error("Merchant is required")
+  if (merchantKey(merchantName) === merchantKey("Uncategorized")) {
+    throw new Error("The Uncategorized merchant cannot be removed")
+  }
 
   const supabase = await createClient()
-  const { error } = await supabase.from("hidden_merchants").upsert({
-    merchant_key: merchantKey(merchantName),
-    merchant_name: merchantName,
-  })
+  const { error } = await supabase
+    .from("transactions")
+    .update({ description: "Uncategorized" })
+    .eq("description", merchantName)
   if (error) throw error
 
   revalidatePath("/", "layout")

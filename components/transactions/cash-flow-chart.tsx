@@ -1,8 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import { Area, AreaChart, CartesianGrid, Line, XAxis } from "recharts"
 
+import { Account, netWorthSummary } from "@/lib/accounts"
 import { Transaction, dailyCashFlow } from "@/lib/transactions"
 import { useIsMobile } from "@/hooks/use-mobile"
 import {
@@ -40,9 +41,13 @@ const chartConfig = {
     label: "Expense",
     color: "var(--chart-3)",
   },
+  balance: {
+    label: "Balance",
+    color: "var(--chart-2)",
+  },
 } satisfies ChartConfig
 
-export function CashFlowChart({ transactions }: { transactions: Transaction[] }) {
+export function CashFlowChart({ transactions, accounts }: { transactions: Transaction[]; accounts: Account[] }) {
   const isMobile = useIsMobile()
   const [timeRange, setTimeRange] = React.useState("90d")
 
@@ -52,7 +57,15 @@ export function CashFlowChart({ transactions }: { transactions: Transaction[] })
     }
   }, [isMobile])
 
-  const data = React.useMemo(() => dailyCashFlow(transactions), [transactions])
+  const data = React.useMemo(() => {
+    const flow = dailyCashFlow(transactions)
+    const currentBalance = netWorthSummary(accounts).netWorth
+    let balance = currentBalance - flow.reduce((sum, day) => sum + day.income - day.expense, 0)
+    return flow.map((day) => {
+      balance += day.income - day.expense
+      return { ...day, balance }
+    })
+  }, [accounts, transactions])
 
   const filteredData = React.useMemo(() => {
     const referenceDate = new Date()
@@ -73,9 +86,9 @@ export function CashFlowChart({ transactions }: { transactions: Transaction[] })
         <CardTitle>Cash Flow</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">
-            Income vs. expenses over time
+            Income, expenses, and balance over time
           </span>
-          <span className="@[540px]/card:hidden">Income vs. expenses</span>
+          <span className="@[540px]/card:hidden">Cash flow and balance</span>
         </CardDescription>
         <CardAction>
           <ToggleGroup
@@ -199,6 +212,14 @@ export function CashFlowChart({ transactions }: { transactions: Transaction[] })
               fill="url(#fillIncome)"
               stroke="var(--color-income)"
               stackId="a"
+            />
+            <Line
+              dataKey="balance"
+              type="monotone"
+              stroke="var(--color-balance)"
+              strokeWidth={2.5}
+              dot={false}
+              activeDot={{ r: 4 }}
             />
           </AreaChart>
         </ChartContainer>

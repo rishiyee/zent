@@ -79,7 +79,7 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <CreditCardsDueSoonCard cards={creditCards} payments={creditCardPayments} />
         </div>
-        <CashFlowChart transactions={transactions} />
+        <CashFlowChart transactions={transactions} accounts={accounts} />
         <TransactionsView
           data={transactions}
           accounts={accounts}

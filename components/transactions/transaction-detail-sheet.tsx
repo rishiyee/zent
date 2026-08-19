@@ -4,7 +4,7 @@ import * as React from "react"
 
 import { Check, CheckCircle2, LoaderCircle, Pencil, Trash2 } from "lucide-react"
 
-import { Transaction, TransactionAccountOption, accountName } from "@/lib/transactions"
+import { Transaction, TransactionAccountOption, accountName, transactionPayeeName } from "@/lib/transactions"
 import { useCurrency } from "@/components/currency-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -78,7 +78,7 @@ export function TransactionDetailSheet({
         {transaction && (
           <>
             <SheetHeader>
-              <SheetTitle>{transaction.description}</SheetTitle>
+              <SheetTitle>{transactionPayeeName(transaction.description)}</SheetTitle>
               <SheetDescription>
                 {dateFormatter.format(new Date(`${transaction.date}T00:00:00`))}
               </SheetDescription>

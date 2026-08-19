@@ -60,6 +60,7 @@ export function detectRecurringSuggestions(
 ): RecurringSuggestion[] {
   const groups = new Map<string, Transaction[]>()
   for (const transaction of transactions) {
+    if (!transaction.description.trim()) continue
     if (transaction.transferToAccountId || transaction.linkedPaymentId) continue
     const key = `${merchantKey(transaction.description)}:${transaction.type}`
     const list = groups.get(key) ?? []

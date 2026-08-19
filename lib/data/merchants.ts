@@ -18,6 +18,7 @@ export async function getMerchants(): Promise<Merchant[]> {
   const hiddenKeys = new Set((hidden ?? []).map((row) => row.merchant_key))
   const counts = new Map<string, number>()
   for (const row of data ?? []) {
+    if (!row.description.trim()) continue
     if (hiddenKeys.has(merchantKey(row.description))) continue
     counts.set(row.description, (counts.get(row.description) ?? 0) + 1)
   }
