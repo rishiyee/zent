@@ -12,6 +12,7 @@ import {
   statuses,
 } from "@/lib/transactions"
 import { CategoryGroup } from "@/lib/categories"
+import { regionLocale } from "@/lib/currency"
 import { Goal } from "@/lib/goals"
 import { Tag } from "@/lib/tags"
 import { cn } from "@/lib/utils"
@@ -165,7 +166,15 @@ export function SplitTransactionDialog({
   tags: Tag[]
   categoryGroups: CategoryGroup[]
 }) {
-  const { format } = useCurrency()
+  const { format, currency, region } = useCurrency()
+  const currencySymbol = React.useMemo(
+    () =>
+      new Intl.NumberFormat(regionLocale(region), {
+        style: "currency",
+        currency,
+      }).formatToParts(0).find((part) => part.type === "currency")?.value ?? currency,
+    [currency, region]
+  )
   const [mode, setMode] = React.useState<SplitMode>("amount")
   const [splits, setSplits] = React.useState<SplitRow[]>([])
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({})
@@ -183,7 +192,12 @@ export function SplitTransactionDialog({
   const total = transaction?.amount ?? 0
   const allocated = splits.reduce((sum, split) => sum + split.amount, 0)
   const remaining = round2(total - allocated)
-  const canSplit = splits.length >= 2 && Math.abs(remaining) < 0.005
+  const hasInvalidAmounts = splits.some((split) => split.amount <= 0)
+  const canSplit =
+    splits.length >= 2 && !hasInvalidAmounts && Math.abs(remaining) < 0.005
+  const allocatedPercent = total > 0
+    ? Math.min(100, Math.max(0, (allocated / total) * 100))
+    : 0
 
   function updateSplit(id: string, patch: Partial<SplitRow>) {
     setSplits((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)))
@@ -205,6 +219,18 @@ export function SplitTransactionDialog({
 
   function removeSplit(id: string) {
     setSplits((prev) => prev.filter((s) => s.id !== id))
+  }
+
+  function balanceSplits() {
+    setSplits((prev) => {
+      const last = prev.at(-1)
+      if (!last) return prev
+      const nextAmount = round2(last.amount + remaining)
+      if (nextAmount <= 0) return prev
+      return prev.map((split) =>
+        split.id === last.id ? { ...split, amount: nextAmount } : split
+      )
+    })
   }
 
   function toggleExpanded(id: string) {
@@ -251,7 +277,7 @@ export function SplitTransactionDialog({
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 Splits
               </p>
@@ -269,10 +295,28 @@ export function SplitTransactionDialog({
               </ToggleGroup>
             </div>
 
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <div className="mb-2 flex items-center justify-between gap-3 text-sm">
+                <span className="text-muted-foreground">Allocated</span>
+                <span className="font-medium tabular-nums">
+                  {format(allocated)} <span className="text-muted-foreground">of {format(total)}</span>
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-[width]",
+                    Math.abs(remaining) < 0.005 ? "bg-emerald-500" : "bg-primary"
+                  )}
+                  style={{ width: `${allocatedPercent}%` }}
+                />
+              </div>
+            </div>
+
             <div className="flex flex-col gap-2">
-              {splits.map((split) => (
+              {splits.map((split, index) => (
                 <div key={split.id} className="rounded-lg border">
-                  <div className="flex items-center gap-2 px-3 py-2.5">
+                  <div className="flex flex-wrap items-center gap-2 px-3 py-2.5">
                     <Button
                       type="button"
                       variant="ghost"
@@ -282,23 +326,27 @@ export function SplitTransactionDialog({
                       {expanded[split.id] ? <ChevronDown /> : <ChevronRight />}
                       <span className="sr-only">Toggle split details</span>
                     </Button>
-                    <span className="flex-1 truncate text-sm font-medium">
-                      {transaction.description}
-                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">Split {index + 1}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {transaction.description}
+                      </p>
+                    </div>
                     <CategorySelect
                       groups={categoryGroups}
                       value={split.category ?? undefined}
                       onValueChange={(v) => updateSplit(split.id, { category: v })}
                       size="sm"
-                      className="w-36"
+                      className="order-last w-[calc(100%-2.5rem)] sm:order-none sm:w-36"
                     />
-                    <div className="relative w-24 shrink-0">
+                    <div className="relative w-28 shrink-0">
                       <span className="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-sm text-muted-foreground">
-                        {mode === "percent" ? "%" : "$"}
+                        {mode === "percent" ? "%" : currencySymbol}
                       </span>
                       <Input
+                        aria-label={`${mode === "percent" ? "Percentage" : "Amount"} for split ${index + 1}`}
                         inputMode="decimal"
-                        className="pl-6 text-right tabular-nums"
+                        className="pl-8 text-right tabular-nums"
                         value={
                           mode === "percent"
                             ? total
@@ -428,17 +476,30 @@ export function SplitTransactionDialog({
               <Plus />
               Add a split
             </Button>
+
+            {Math.abs(remaining) >= 0.005 && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={balanceSplits}
+                className="w-fit"
+                disabled={splits.length === 0 || splits.at(-1)!.amount + remaining <= 0}
+              >
+                Apply {format(Math.abs(remaining))} {remaining > 0 ? "remaining" : "overage"} to last split
+              </Button>
+            )}
           </div>
         )}
 
-        <DialogFooter className="items-center sm:justify-between">
+        <DialogFooter className="gap-3 border-t pt-4 sm:items-center sm:justify-between">
           <Button
             type="button"
             variant="ghost"
             className="text-destructive hover:text-destructive"
             onClick={() => onOpenChange(false)}
           >
-            Remove all splits
+            Discard splits
           </Button>
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-end text-right leading-tight">
@@ -450,7 +511,13 @@ export function SplitTransactionDialog({
               >
                 {format(Math.abs(remaining))}
               </span>
-              <span className="text-xs text-muted-foreground">left to split</span>
+              <span className="text-xs text-muted-foreground">
+                {hasInvalidAmounts
+                  ? "each split must be greater than zero"
+                  : remaining < 0
+                    ? "over allocated"
+                    : "left to split"}
+              </span>
             </div>
             <DialogClose render={<Button variant="outline" type="button" />}>
               Cancel

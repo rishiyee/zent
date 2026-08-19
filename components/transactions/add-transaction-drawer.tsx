@@ -43,6 +43,17 @@ function emptyForm(accounts: TransactionAccountOption[]): TransactionFormValue {
   }
 }
 
+function nextTransactionForm(
+  current: TransactionFormValue
+): TransactionFormValue {
+  return {
+    ...current,
+    description: "",
+    amount: "",
+    notes: "",
+  }
+}
+
 export function AddTransactionDrawer({
   onAdd,
   rules,
@@ -94,6 +105,11 @@ export function AddTransactionDrawer({
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
 
+    const submitter = (event.nativeEvent as SubmitEvent).submitter as
+      | HTMLButtonElement
+      | null
+    const addAnother = submitter?.value === "add-another"
+
     const amount = calculateExpression(form.amount)
     if (!form.description.trim() || amount === null || amount <= 0) {
       return
@@ -118,8 +134,15 @@ export function AddTransactionDrawer({
       transferToAccountId: null,
     })
 
-    setForm(emptyForm(accounts))
-    setOpen(false)
+    if (addAnother) {
+      setForm((current) => nextTransactionForm(current))
+      window.requestAnimationFrame(() => {
+        document.getElementById("description")?.focus()
+      })
+    } else {
+      setForm(emptyForm(accounts))
+      setOpen(false)
+    }
   }
 
   return (
@@ -159,8 +182,16 @@ export function AddTransactionDrawer({
             </div>
           </div>
           <DrawerFooter className="border-t bg-background pb-[max(1rem,env(safe-area-inset-bottom))]">
-            <Button type="submit">Save transaction</Button>
-            <DrawerClose render={<Button variant="outline" type="button" />}>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button type="submit" variant="outline" name="submit-action" value="add-another">
+                <Plus />
+                Save &amp; add another
+              </Button>
+              <Button type="submit" name="submit-action" value="save">
+                Save transaction
+              </Button>
+            </div>
+            <DrawerClose render={<Button variant="ghost" type="button" />}>
               Cancel
             </DrawerClose>
           </DrawerFooter>

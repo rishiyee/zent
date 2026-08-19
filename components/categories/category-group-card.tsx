@@ -55,12 +55,17 @@ function IconPicker({
   onChange: (icon: string) => void
 }) {
   return (
-    <div className="flex flex-wrap gap-1">
+    <div
+      className="grid max-h-44 grid-cols-8 gap-1 overflow-y-auto pr-1 sm:grid-cols-10"
+      aria-label="Choose a category emoji"
+    >
       {categoryIconPresets.map((presetIcon) => (
         <button
           key={presetIcon}
           type="button"
           onClick={() => onChange(presetIcon)}
+          aria-label={`Use ${presetIcon} emoji`}
+          aria-pressed={icon === presetIcon}
           className={cn(
             "flex size-10 items-center justify-center rounded-lg text-lg hover:bg-muted sm:size-9",
             icon === presetIcon && "bg-muted ring-1 ring-ring"
