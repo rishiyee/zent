@@ -65,7 +65,7 @@ export function SettingsNav() {
   const pathname = usePathname()
 
   return (
-    <div className="flex w-full max-w-56 shrink-0 flex-col gap-6 max-lg:max-w-none max-lg:flex-row max-lg:overflow-x-auto max-lg:rounded-xl max-lg:border max-lg:p-2">
+    <div className="flex w-full max-w-56 shrink-0 flex-col gap-6 max-lg:max-w-none max-lg:flex-row max-lg:overflow-x-auto max-lg:rounded-xl max-lg:border max-lg:p-2 lg:sticky lg:top-0 lg:max-h-full lg:self-start lg:overflow-y-auto lg:pr-1">
       <SettingsLinkGroup title="Account" links={accountLinks} pathname={pathname} />
       <SettingsLinkGroup title="Household" links={householdLinks} pathname={pathname} />
       <div className="shrink-0 rounded-xl border max-lg:contents">
