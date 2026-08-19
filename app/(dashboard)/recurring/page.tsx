@@ -15,16 +15,17 @@ import { getMerchants } from "@/lib/data/merchants"
 import { getRecurringDismissals, getRecurringSchedules } from "@/lib/data/recurring"
 import { getTransactions } from "@/lib/data/transactions"
 import { detectRecurringSuggestions } from "@/lib/recurring"
+import { withDataRetry } from "@/lib/data/with-retry"
 
 export default async function RecurringPage() {
   const [merchants, accounts, categoryGroups, schedules, transactions, dismissals] =
     await Promise.all([
-      getMerchants(),
-      getAccounts(),
-      getCategoryGroups(),
-      getRecurringSchedules(),
-      getTransactions(),
-      getRecurringDismissals(),
+      withDataRetry(getMerchants),
+      withDataRetry(getAccounts),
+      withDataRetry(getCategoryGroups),
+      withDataRetry(getRecurringSchedules),
+      withDataRetry(getTransactions),
+      withDataRetry(getRecurringDismissals),
     ])
   const suggestions = detectRecurringSuggestions(transactions, schedules, dismissals)
 
