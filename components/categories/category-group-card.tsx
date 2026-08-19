@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   Dialog,
   DialogContent,
@@ -46,6 +47,19 @@ import {
 } from "@/components/ui/select"
 
 const typeItems = { income: "Income", expense: "Expense" }
+const iconLabels = [
+  "Cash", "Savings", "Money", "Work", "Housing", "Utilities", "Groceries", "Dining",
+  "Car", "Fitness", "Entertainment", "Shopping", "Travel", "Gifts", "Pets", "Investments",
+  "Transfers", "Other", "Education", "Bills", "Healthcare", "Gaming", "Coffee", "Childcare",
+  "Credit card", "Banking", "Coins", "Analytics", "Loss", "Calculator", "Freelance", "Maintenance",
+  "Office", "Furniture", "Rent", "Cleaning", "Repairs", "Plants", "Home", "Construction",
+  "Fast food", "Pizza", "Healthy food", "Fruit", "Bakery", "Beer", "Wine", "Drinks",
+  "Fuel", "Bus", "Train", "Bicycle", "Scooter", "Taxi", "Parking", "Luggage",
+  "Medicine", "First aid", "Dental", "Wellness", "Running", "Gym", "Sports", "Swimming",
+  "Mobile", "Computer", "Internet", "Television", "Audio", "Books", "Art", "Photography",
+  "Clothing", "Shoes", "Beauty", "Haircare", "Watch", "Jewelry", "Toys", "Celebration",
+  "Sustainability", "Nature", "Sunny day", "Rainy day", "Love", "Partnership", "Faith", "Favorite",
+]
 
 function IconPicker({
   icon,
@@ -55,26 +69,18 @@ function IconPicker({
   onChange: (icon: string) => void
 }) {
   return (
-    <div
-      className="grid max-h-44 grid-cols-8 gap-1 overflow-y-auto pr-1 sm:grid-cols-10"
-      aria-label="Choose a category emoji"
-    >
-      {categoryIconPresets.map((presetIcon) => (
-        <button
-          key={presetIcon}
-          type="button"
-          onClick={() => onChange(presetIcon)}
-          aria-label={`Use ${presetIcon} emoji`}
-          aria-pressed={icon === presetIcon}
-          className={cn(
-            "flex size-10 items-center justify-center rounded-lg text-lg hover:bg-muted sm:size-9",
-            icon === presetIcon && "bg-muted ring-1 ring-ring"
-          )}
-        >
-          {presetIcon}
-        </button>
-      ))}
-    </div>
+    <TooltipProvider delay={300}>
+      <div className="grid max-h-44 grid-cols-8 gap-1 overflow-y-auto pr-1 sm:grid-cols-10" aria-label="Choose a category emoji">
+        {categoryIconPresets.map((presetIcon, index) => (
+          <Tooltip key={presetIcon}>
+            <TooltipTrigger render={<button type="button" onClick={() => onChange(presetIcon)} aria-label={`${iconLabels[index] ?? "Category"} emoji`} aria-pressed={icon === presetIcon} className={cn("flex size-10 items-center justify-center rounded-lg text-lg hover:bg-muted sm:size-9", icon === presetIcon && "bg-muted ring-1 ring-ring")} />}>
+              {presetIcon}
+            </TooltipTrigger>
+            <TooltipContent>{iconLabels[index] ?? "Category"}</TooltipContent>
+          </Tooltip>
+        ))}
+      </div>
+    </TooltipProvider>
   )
 }
 
@@ -456,16 +462,26 @@ export function CategoryGroupCard({
                   }}
                 />
             </CategoryFormOverlay>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground md:opacity-0 md:group-hover/row:opacity-100 md:group-focus-within/row:opacity-100"
-              onClick={() => onDeleteCategory(category.id)}
-            >
-              <Trash2 className="size-3.5" />
-              <span className="sr-only">Delete {category.name}</span>
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger render={<Button type="button" variant="ghost" size="icon" className="text-muted-foreground md:opacity-0 md:group-hover/row:opacity-100 md:group-focus-within/row:opacity-100" />}>
+                <Trash2 className="size-3.5" />
+                <span className="sr-only">Delete {category.name}</span>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete &ldquo;{category.name}&rdquo;?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This category will be removed permanently. Existing transactions using it will become uncategorized.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Keep category</AlertDialogCancel>
+                  <AlertDialogAction variant="destructive" onClick={() => onDeleteCategory(category.id)}>
+                    Delete category
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         ))}
         {group.categories.length === 0 && (
