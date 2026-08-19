@@ -23,6 +23,11 @@ type View = "flow" | "bar" | "table"
 
 const COLORS = ["#2563eb", "#8b5cf6", "#ec4899", "#f59e0b", "#14b8a6", "#64748b"]
 
+function sentenceCase(value: string) {
+  const text = value.trim()
+  return text ? text.charAt(0).toLocaleUpperCase() + text.slice(1) : text
+}
+
 export function ReportsView({ transactions, categoryGroups, accounts }: {
   transactions: Transaction[]
   categoryGroups: CategoryGroup[]
@@ -70,6 +75,7 @@ export function ReportsView({ transactions, categoryGroups, accounts }: {
   }, [filtered, tab, categoryToGroup])
 
   const rangeLabel = { all: "All time", year: "This year", "90d": "Last 90 days", "30d": "Last 30 days" }[range]
+  const reportTitle = tab === "cash-flow" ? "Cash flow" : tab === "spending" ? "Spending" : "Income"
 
   function exportCsv() {
     const csv = ["Group,Category,Amount", ...rows.map((r) => `"${r.group}","${r.category}",${r.value}`)].join("\n")
@@ -83,21 +89,21 @@ export function ReportsView({ transactions, categoryGroups, accounts }: {
   return (
       <div className="flex min-w-0 flex-col gap-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-          <Tabs value={tab} onValueChange={(value) => setTab(value as ReportTab)} className="min-w-0 overflow-x-auto">
-            <TabsList variant="line" aria-label="Report type">
-              <TabsTrigger value="cash-flow">Cash Flow</TabsTrigger>
-              <TabsTrigger value="spending">Spending</TabsTrigger>
-              <TabsTrigger value="income">Income</TabsTrigger>
+          <Tabs value={tab} onValueChange={(value) => setTab(value as ReportTab)} className="w-full min-w-0 lg:w-auto">
+            <TabsList variant="line" className="grid w-full grid-cols-3 lg:flex lg:w-auto" aria-label="Report type">
+              <TabsTrigger value="cash-flow" className="min-w-0">Cash flow</TabsTrigger>
+              <TabsTrigger value="spending" className="min-w-0">Spending</TabsTrigger>
+              <TabsTrigger value="income" className="min-w-0">Income</TabsTrigger>
             </TabsList>
           </Tabs>
           <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
             <Select value={range} onValueChange={(v) => v && setRange(v as Range)}>
-              <SelectTrigger className="w-[150px]"><CalendarDays /><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[150px]" aria-label="Reporting period"><CalendarDays aria-hidden="true" /><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="all">All time</SelectItem><SelectItem value="year">This year</SelectItem><SelectItem value="90d">Last 90 days</SelectItem><SelectItem value="30d">Last 30 days</SelectItem></SelectContent>
             </Select>
             <Select value={account} onValueChange={(v) => v && setAccount(v)}>
-              <SelectTrigger className="w-[170px]"><Filter /><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="all">All accounts</SelectItem>{accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
+              <SelectTrigger className="w-[170px]" aria-label="Account filter"><Filter aria-hidden="true" /><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All accounts</SelectItem>{accounts.map((a) => <SelectItem key={a.id} value={a.id}>{sentenceCase(a.name)}</SelectItem>)}</SelectContent>
             </Select>
             <Button variant="outline" onClick={exportCsv}><Download /> Export</Button>
           </div>
@@ -119,9 +125,12 @@ export function ReportsView({ transactions, categoryGroups, accounts }: {
             rangeLabel={rangeLabel}
             format={format}
           />
-        ) : <Card className="gap-0 py-0">
+        ) : <Card className="gap-0 py-0" aria-labelledby="report-heading" aria-describedby="report-period">
           <div className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-center">
-            <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{tab.replace('-', ' ')}</p><h2 className="mt-1 text-xl font-semibold">{rangeLabel}</h2></div>
+            <div>
+              <h2 id="report-heading" className="text-xl font-semibold">{reportTitle}</h2>
+              <p id="report-period" className="mt-1 text-sm text-muted-foreground">Reporting period: <span className="font-medium text-foreground">{rangeLabel}</span></p>
+            </div>
             <div className="flex items-center gap-1 sm:ml-auto">
               <span className="mr-2 hidden text-sm text-muted-foreground sm:inline">By category & group</span>
               <ToggleGroup variant="outline" size="sm" spacing={0} aria-label="Report view">
@@ -233,7 +242,7 @@ function FlowReport({ rows, total, format }: { rows: Row[]; total: number; forma
       nextY: layout.nextY + targetH + 16,
     }
   }, { items: [], nextY: 24 }).items
-  return <div className="overflow-x-auto"><svg viewBox="0 0 1100 540" className="h-[clamp(300px,48vh,440px)] min-w-[760px] w-full" role="img" aria-label="Cash flow by category group and category">
+  return <div className="max-w-full overflow-x-auto overscroll-x-contain"><svg viewBox="0 0 1100 540" className="h-[clamp(300px,48vh,440px)] min-w-[760px] w-full" role="img" aria-label="Cash flow by category group and category">
     <defs>{COLORS.map((c, i) => <linearGradient key={c} id={`flow-${i}`} x1="0" x2="1"><stop stopColor={c} stopOpacity=".18"/><stop offset="1" stopColor={c} stopOpacity=".42"/></linearGradient>)}</defs>
     <text x="20" y="20" className="fill-muted-foreground text-[12px] font-semibold">TOTAL</text><text x="20" y="47" className="fill-foreground text-[18px] font-semibold">{format(total)}</text>
     {rowPositions.map(({ row, sourceH, sourceY, targetH, targetY, colorIndex }) => <g key={`${row.group}-${row.category}`}><path d={`M 430 ${sourceY} C 610 ${sourceY}, 650 ${targetY}, 820 ${targetY}`} fill="none" stroke={`url(#flow-${colorIndex})`} strokeWidth={sourceH} /><rect x="820" y={targetY-targetH/2} width="10" height={targetH} rx="2" fill={COLORS[colorIndex]} /><text x="850" y={targetY-4} className="fill-foreground text-[13px] font-medium">{row.icon} {row.category}</text><text x="850" y={targetY+15} className="fill-muted-foreground text-[12px]">{format(row.value)} · {((row.value/Math.max(total,1))*100).toFixed(1)}%</text></g>)}
